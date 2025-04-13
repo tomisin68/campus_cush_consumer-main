@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "960243657636",
+    "project_id": "campus-cush",
+    "storage_bucket": "campus-cush.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960243657636:android:b14c643bb69e4343cfaf31",
+        "android_client_info": {
+          "package_name": "com.example.campus_cush_consumer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClHRqb2-dFiefE606DKsLcBz5kA95sEJI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
