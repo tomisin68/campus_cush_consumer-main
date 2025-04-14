@@ -20,7 +20,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF0A0E21);
+    const primaryColor = Color(0xFF0A0E21);
     final cardColor = isDarkMode ? Colors.grey[900] : Colors.grey[100];
     final textColor = isDarkMode ? Colors.white : Colors.black;
 
@@ -52,26 +52,28 @@ class _ProfilePageState extends State<ProfilePage> {
                   // User Header Section
                   _buildUserHeader(isVerifiedAgent, textColor, cardColor!),
                   const SizedBox(height: 30),
-                  
+
                   // Quick Stats (for verified agents)
-                  if (isVerifiedAgent) _buildAgentStats(primaryColor, textColor),
-                  
+                  if (isVerifiedAgent)
+                    _buildAgentStats(primaryColor, textColor),
+
                   // Quick Actions Grid
-                  _buildQuickActionsGrid(primaryColor, textColor, isVerifiedAgent),
+                  _buildQuickActionsGrid(
+                      primaryColor, textColor, isVerifiedAgent),
                   const SizedBox(height: 20),
-                  
+
                   // Settings Section
                   _buildSettingsSection(cardColor, textColor),
                   const SizedBox(height: 20),
-                  
+
                   // Support Section
                   _buildSupportSection(cardColor, textColor),
                   const SizedBox(height: 20),
-                  
+
                   // Legal Section
                   _buildLegalSection(cardColor, textColor),
                   const SizedBox(height: 20),
-                  
+
                   // Logout & App Info
                   _buildLogoutSection(textColor),
                   const SizedBox(height: 40),
@@ -192,8 +194,10 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               _buildStatItem('Posts', postCount.toString(), Icons.list_alt),
               _buildStatItem('Earnings', '\$$earnings', Icons.attach_money),
-              _buildStatItem('Views', profileViews.toString(), Icons.remove_red_eye),
-              _buildStatItem('Messages', messagesReceived.toString(), Icons.message),
+              _buildStatItem(
+                  'Views', profileViews.toString(), Icons.remove_red_eye),
+              _buildStatItem(
+                  'Messages', messagesReceived.toString(), Icons.message),
             ],
           ),
           const SizedBox(height: 10),
@@ -239,7 +243,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildQuickActionsGrid(Color primaryColor, Color textColor, bool isVerified) {
+  Widget _buildQuickActionsGrid(
+      Color primaryColor, Color textColor, bool isVerified) {
     final actions = [
       {
         'title': isVerified ? 'Post Accommodation' : 'Become Verified Agent',
@@ -373,7 +378,8 @@ class _ProfilePageState extends State<ProfilePage> {
           return Column(
             children: [
               ListTile(
-                leading: Icon(item['icon'] as IconData, color: Colors.grey[600]),
+                leading:
+                    Icon(item['icon'] as IconData, color: Colors.grey[600]),
                 title: Text(
                   item['title'] as String,
                   style: GoogleFonts.roboto(
@@ -440,7 +446,8 @@ class _ProfilePageState extends State<ProfilePage> {
               return Column(
                 children: [
                   ListTile(
-                    leading: Icon(item['icon'] as IconData, color: Colors.grey[600]),
+                    leading:
+                        Icon(item['icon'] as IconData, color: Colors.grey[600]),
                     title: Text(
                       item['title'] as String,
                       style: GoogleFonts.roboto(
@@ -448,7 +455,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         color: textColor,
                       ),
                     ),
-                    trailing: Icon(Icons.chevron_right, color: Colors.grey[500]),
+                    trailing:
+                        Icon(Icons.chevron_right, color: Colors.grey[500]),
                     onTap: () {
                       if (item['title'] == 'Give Feedback') {
                         _showFeedbackBottomSheet();
@@ -497,7 +505,8 @@ class _ProfilePageState extends State<ProfilePage> {
           return Column(
             children: [
               ListTile(
-                leading: Icon(item['icon'] as IconData, color: Colors.grey[600]),
+                leading:
+                    Icon(item['icon'] as IconData, color: Colors.grey[600]),
                 title: Text(
                   item['title'] as String,
                   style: GoogleFonts.roboto(
@@ -603,10 +612,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const SizedBox(height: 20),
-              _buildBenefitItem(Icons.verified, 'Verified badge on your profile'),
+              _buildBenefitItem(
+                  Icons.verified, 'Verified badge on your profile'),
               _buildBenefitItem(Icons.home, 'Post unlimited accommodations'),
               _buildBenefitItem(Icons.attach_money, 'Earn money from rentals'),
-              _buildBenefitItem(Icons.star, 'Higher visibility in search results'),
+              _buildBenefitItem(
+                  Icons.star, 'Higher visibility in search results'),
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
@@ -730,9 +741,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: List.generate(5, (index) {
                   return IconButton(
                     icon: Icon(
-                      index < 4 ? Icons.sentiment_very_satisfied : Icons.sentiment_neutral,
-                      size: 40,
-                      color: index < 4 ? Colors.amber : Colors.grey),
+                        index < 4
+                            ? Icons.sentiment_very_satisfied
+                            : Icons.sentiment_neutral,
+                        size: 40,
+                        color: index < 4 ? Colors.amber : Colors.grey),
                     onPressed: () {},
                   );
                 }),

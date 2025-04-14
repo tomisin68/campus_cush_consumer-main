@@ -17,20 +17,23 @@ class _OnboardingPageState extends State<OnboardingPage> {
     OnboardingSlide(
       image: 'assets/hostel1.jpg',
       headline: 'Find Student Hostels Easily',
-      subtext: 'Discover affordable and comfortable hostels near your campus with just a few taps.',
-      color: Color(0xFF1E88E5),
+      subtext:
+          'Discover affordable and comfortable hostels near your campus with just a few taps.',
+      color: const Color(0xFF1E88E5),
     ),
     OnboardingSlide(
       image: 'assets/hostel2.jpg',
       headline: 'Secure Payment System',
-      subtext: 'Pay for your hostel securely with our verified payment gateway. No hidden charges!',
-      color: Color(0xFF43A047),
+      subtext:
+          'Pay for your hostel securely with our verified payment gateway. No hidden charges!',
+      color: const Color(0xFF43A047),
     ),
     OnboardingSlide(
       image: 'assets/hostel1.jpg',
       headline: '24/7 Support',
-      subtext: 'Our support team is always available to help with any issues you might encounter.',
-      color: Color(0xFF5E35B1),
+      subtext:
+          'Our support team is always available to help with any issues you might encounter.',
+      color: const Color(0xFF5E35B1),
     ),
   ];
 
@@ -75,7 +78,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       children: [
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 300),
-                          transitionBuilder: (Widget child, Animation<double> animation) {
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
                             return FadeTransition(
                               opacity: animation,
                               child: child,
@@ -83,7 +87,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           },
                           child: Text(
                             slides[_currentPage].headline,
-                            key: ValueKey<String>(slides[_currentPage].headline),
+                            key:
+                                ValueKey<String>(slides[_currentPage].headline),
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -96,7 +101,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         const SizedBox(height: 16),
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 300),
-                          transitionBuilder: (Widget child, Animation<double> animation) {
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
                             return FadeTransition(
                               opacity: animation,
                               child: child,
@@ -138,7 +144,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           onPressed: () => _navigateToMain(),
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.grey[700],
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                           ),
                           child: const Text(
                             'Skip',
@@ -156,13 +163,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 14),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                _currentPage == slides.length - 1 ? 'Get Started' : 'Next',
+                                _currentPage == slides.length - 1
+                                    ? 'Get Started'
+                                    : 'Next',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -170,8 +180,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               ),
                               const SizedBox(width: 8),
                               Icon(
-                                _currentPage == slides.length - 1 
-                                    ? Icons.login_rounded 
+                                _currentPage == slides.length - 1
+                                    ? Icons.login_rounded
                                     : Icons.arrow_forward_rounded,
                                 size: 20,
                               ),

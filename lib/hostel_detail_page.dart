@@ -7,7 +7,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 class HostelDetailPage extends StatefulWidget {
   final Hostel hostel;
 
-  const HostelDetailPage({Key? key, required this.hostel}) : super(key: key);
+  const HostelDetailPage({super.key, required this.hostel});
 
   @override
   State<HostelDetailPage> createState() => _HostelDetailPageState();
@@ -320,12 +320,12 @@ class _HostelDetailPageState extends State<HostelDetailPage> {
                                     ),
                                   ),
                                   if (_agent!.verified)
-                                    Row(
+                                    const Row(
                                       children: [
-                                        const SizedBox(width: 8),
-                                        const Icon(Icons.verified,
+                                        SizedBox(width: 8),
+                                        Icon(Icons.verified,
                                             color: Colors.blueAccent, size: 16),
-                                        const SizedBox(width: 4),
+                                        SizedBox(width: 4),
                                         Text(
                                           'Verified',
                                           style: TextStyle(

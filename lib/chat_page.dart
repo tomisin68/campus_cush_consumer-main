@@ -17,7 +17,7 @@ class _ChatPageState extends State<ChatPage> {
   bool _isRecording = false;
   Timer? _typingTimer;
   Random random = Random();
-  
+
   // Sample automated responses
   final List<String> _botResponses = [
     "Hi there! How can I help you find accommodation today?",
@@ -45,9 +45,10 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       _isTyping = true;
     });
-    
+
     // Randomize typing time between 1-3 seconds
-    _typingTimer = Timer(Duration(milliseconds: 1000 + random.nextInt(2000)), () {
+    _typingTimer =
+        Timer(Duration(milliseconds: 1000 + random.nextInt(2000)), () {
       if (mounted) {
         setState(() {
           _isTyping = false;
@@ -67,7 +68,7 @@ class _ChatPageState extends State<ChatPage> {
   void _handleSubmitted(String text) {
     _textController.clear();
     if (text.trim().isEmpty) return;
-    
+
     setState(() {
       _messages.add(
         ChatMessage(
@@ -77,7 +78,7 @@ class _ChatPageState extends State<ChatPage> {
         ),
       );
     });
-    
+
     _scrollToBottom();
     _simulateBotResponse();
   }
@@ -99,14 +100,15 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       _isRecording = !_isRecording;
     });
-    
+
     if (_isRecording) {
       // Simulate recording end after 2 seconds
       Timer(const Duration(seconds: 2), () {
         if (mounted) {
           setState(() {
             _isRecording = false;
-            _handleSubmitted("I'm looking for a hostel near the engineering building.");
+            _handleSubmitted(
+                "I'm looking for a hostel near the engineering building.");
           });
         }
       });
@@ -130,7 +132,8 @@ class _ChatPageState extends State<ChatPage> {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundImage: NetworkImage('https://campus-cush-placeholder.com/agent.jpg'),
+              backgroundImage: const NetworkImage(
+                  'https://campus-cush-placeholder.com/agent.jpg'),
               backgroundColor: Colors.deepPurple.shade200,
               child: const Icon(Icons.support_agent, color: Colors.white),
             ),
@@ -155,7 +158,8 @@ class _ChatPageState extends State<ChatPage> {
                     const SizedBox(width: 4),
                     Text(
                       'Online',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade200),
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey.shade200),
                     ),
                   ],
                 ),
@@ -191,7 +195,7 @@ class _ChatPageState extends State<ChatPage> {
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("assets/chat_bg.png"),
+            image: const AssetImage("assets/chat_bg.png"),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
               Colors.black.withOpacity(0.05),
@@ -212,11 +216,13 @@ class _ChatPageState extends State<ChatPage> {
                   Expanded(
                     child: Text(
                       'Our agents are available 24/7 to help you find the perfect accommodation',
-                      style: TextStyle(color: Colors.amber.shade900, fontSize: 12),
+                      style:
+                          TextStyle(color: Colors.amber.shade900, fontSize: 12),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 16, color: Colors.amber),
+                    icon:
+                        const Icon(Icons.close, size: 16, color: Colors.amber),
                     onPressed: () {
                       // Handle close button action
                     },
@@ -224,19 +230,20 @@ class _ChatPageState extends State<ChatPage> {
                 ],
               ),
             ),
-            
+
             // Message List
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   return _buildMessageItem(_messages[index]);
                 },
               ),
             ),
-            
+
             // Bot typing indicator
             if (_isTyping)
               Container(
@@ -262,7 +269,7 @@ class _ChatPageState extends State<ChatPage> {
                   ],
                 ),
               ),
-            
+
             // Message Input
             Container(
               decoration: BoxDecoration(
@@ -336,9 +343,12 @@ class _ChatPageState extends State<ChatPage> {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: _isRecording 
-                              ? [Colors.red, Colors.redAccent] 
-                              : [Colors.deepPurple.shade700, Colors.deepPurple.shade400],
+                            colors: _isRecording
+                                ? [Colors.red, Colors.redAccent]
+                                : [
+                                    Colors.deepPurple.shade700,
+                                    Colors.deepPurple.shade400
+                                  ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -388,16 +398,16 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildMessageItem(ChatMessage message) {
     final isUser = message.isUser;
     final time = _formatTime(message.timestamp);
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isUser) _buildAvatar(),
           if (!isUser) const SizedBox(width: 8),
-          
           Flexible(
             child: Container(
               constraints: BoxConstraints(
@@ -405,9 +415,8 @@ class _ChatPageState extends State<ChatPage> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isUser 
-                    ? Colors.deepPurple.shade400
-                    : Colors.grey.shade100,
+                color:
+                    isUser ? Colors.deepPurple.shade400 : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(20).copyWith(
                   bottomRight: isUser ? const Radius.circular(0) : null,
                   bottomLeft: !isUser ? const Radius.circular(0) : null,
@@ -443,7 +452,7 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                       if (isUser) ...[
                         const SizedBox(width: 4),
-                        Icon(
+                        const Icon(
                           Icons.done_all,
                           size: 14,
                           color: Colors.white70,
@@ -455,7 +464,6 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           ),
-          
           if (isUser) const SizedBox(width: 8),
           if (isUser) _buildUserAvatar(),
         ],
@@ -484,7 +492,7 @@ class _ChatPageState extends State<ChatPage> {
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
   }
-  
+
   void _showOptionsModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -498,7 +506,8 @@ class _ChatPageState extends State<ChatPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildOptionTile(Icons.group, 'Create group', () {}),
-              _buildOptionTile(Icons.notifications, 'Mute notifications', () {}),
+              _buildOptionTile(
+                  Icons.notifications, 'Mute notifications', () {}),
               _buildOptionTile(Icons.search, 'Search', () {}),
               _buildOptionTile(Icons.wallpaper, 'Wallpaper', () {}),
               _buildOptionTile(Icons.block, 'Block agent', () {}),
@@ -510,7 +519,7 @@ class _ChatPageState extends State<ChatPage> {
       },
     );
   }
-  
+
   Widget _buildOptionTile(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: Colors.deepPurple.shade400),
@@ -521,7 +530,7 @@ class _ChatPageState extends State<ChatPage> {
       },
     );
   }
-  
+
   void _showAttachmentOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -539,17 +548,21 @@ class _ChatPageState extends State<ChatPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildAttachmentOption(Icons.insert_drive_file, Colors.blue, 'Document'),
-                  _buildAttachmentOption(Icons.camera_alt, Colors.red, 'Camera'),
+                  _buildAttachmentOption(
+                      Icons.insert_drive_file, Colors.blue, 'Document'),
+                  _buildAttachmentOption(
+                      Icons.camera_alt, Colors.red, 'Camera'),
                   _buildAttachmentOption(Icons.photo, Colors.purple, 'Gallery'),
-                  _buildAttachmentOption(Icons.headphones, Colors.orange, 'Audio'),
+                  _buildAttachmentOption(
+                      Icons.headphones, Colors.orange, 'Audio'),
                 ],
               ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildAttachmentOption(Icons.location_on, Colors.green, 'Location'),
+                  _buildAttachmentOption(
+                      Icons.location_on, Colors.green, 'Location'),
                   _buildAttachmentOption(Icons.person, Colors.teal, 'Contact'),
                   _buildAttachmentOption(Icons.poll, Colors.amber, 'Poll'),
                   _buildAttachmentOption(Icons.money, Colors.pink, 'Payment'),
@@ -561,7 +574,7 @@ class _ChatPageState extends State<ChatPage> {
       },
     );
   }
-  
+
   Widget _buildAttachmentOption(IconData icon, Color color, String label) {
     return InkWell(
       onTap: () {

@@ -10,6 +10,7 @@ import 'package:campus_cush_consumer/explore_page.dart';
 import 'package:campus_cush_consumer/saved.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:campus_cush_consumer/models/hostel_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,14 +29,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late AnimationController _saveController;
 
   // Track liked and saved states
-  final Map<String, bool> _likedStatus = {};
-  final Map<String, bool> _savedStatus = {};
-
-  // Firestore
+  Map<String, bool> _likedStatus = {};
+  Map<String, bool> _savedStatus = {};
+// Firestore instance should typically be accessed directly via FirebaseFirestore.instance
+// unless you have a specific reason to store it in a variable
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  List<Hostel> _featuredHostels = [];
-  List<Hostel> _recentHostels = [];
-  bool _isLoading = true;
+
+// Initialize as empty lists and mark as late since they'll be initialized later
+  late List<Hostel> _featuredHostels =
+      []; // Note: Fix typo from "hostels" to "hostels" if needed
+  late List<Hostel> _recentHostels = [];
+
+// Better to use a ValueNotifier or state management for loading state
+  ValueNotifier<bool> _isLoading = ValueNotifier(true);
+
+// OR if not using ValueNotifier:
 
   @override
   void initState() {
@@ -46,42 +54,164 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadHostels() async {
-    try {
-      // Get featured hostels (first 5)
-      final featuredQuery = await _firestore
-          .collection('hostels')
-          .where('isAvailable', isEqualTo: true)
-          .limit(5)
-          .get();
-      final featuredHostels =
-          featuredQuery.docs.map((doc) => Hostel.fromFirestore(doc)).toList();
+    if (!mounted) return;
 
-      // Get recent hostels (last 3 by createdAt)
-      final recentQuery = await _firestore
-          .collection('hostels')
-          .where('isAvailable', isEqualTo: true)
-          .orderBy('createdAt', descending: true)
-          .limit(3)
-          .get();
-      final recentHostels =
-          recentQuery.docs.map((doc) => Hostel.fromFirestore(doc)).toList();
+    _isLoading.value = true; // Since it's a ValueNotifier, update directly
+
+    try {
+      debugPrint('Starting hostel data loading...');
+      final stopwatch = Stopwatch()..start();
+
+      final results = await Future.wait([
+        _getFeaturedHostels(),
+        _getRecentHostels(),
+      ], eagerError: true);
+
+      final featuredHostels = results[0];
+      final recentHostels = results[1];
+
+      debugPrint('''Data loaded in ${stopwatch.elapsedMilliseconds}ms:
+      Featured: ${featuredHostels.length}, 
+      Recent: ${recentHostels.length}''');
+
+      if (!mounted) return;
+
+      final allHostels = [...featuredHostels, ...recentHostels];
+      final newLikedStatus = <String, bool>{};
+      final newSavedStatus = <String, bool>{};
+
+      for (final hostel in allHostels) {
+        newLikedStatus[hostel.id] = _likedStatus[hostel.id] ?? false;
+        newSavedStatus[hostel.id] = _savedStatus[hostel.id] ?? false;
+      }
 
       setState(() {
         _featuredHostels = featuredHostels;
         _recentHostels = recentHostels;
-        _isLoading = false;
-
-        // Initialize liked/saved status
-        for (var hostel in [..._featuredHostels, ..._recentHostels]) {
-          _likedStatus[hostel.id] = false;
-          _savedStatus[hostel.id] = false;
-        }
+        _likedStatus = newLikedStatus;
+        _savedStatus = newSavedStatus;
       });
-    } catch (e) {
-      debugPrint('Error loading hostels: $e');
-      setState(() => _isLoading = false);
+    } on FirebaseException catch (e) {
+      debugPrint('Firestore error: ${e.code} - ${e.message}');
+      if (e.code == 'failed-precondition') {
+        _showIndexErrorNotification();
+      }
+      _handleError(e);
+    } on TypeError catch (e) {
+      debugPrint('Type conversion error: $e');
+      _handleError(
+          Exception('Data format error. Please check hostel documents.'));
+    } catch (e, stackTrace) {
+      debugPrint('Unexpected error: $e\n$stackTrace');
+      _handleError(e is Exception ? e : Exception('Unknown error occurred'));
+    } finally {
+      if (mounted) _isLoading.value = false;
     }
   }
+
+  void _handleError(Exception error) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Failed to load hostels'),
+        action: SnackBarAction(
+          label: 'Retry',
+          onPressed: _loadHostels,
+        ),
+      ),
+    );
+  }
+
+  void _showIndexErrorNotification() {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Database needs configuration'),
+        action: SnackBarAction(
+          label: 'Fix Now',
+          onPressed: _openIndexCreationUrl,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openIndexCreationUrl() async {
+    const url =
+        'https://console.firebase.google.com/project/_/firestore/indexes';
+    try {
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        debugPrint('Could not launch URL: $url');
+      }
+    } catch (e) {
+      debugPrint('Error launching URL: $e');
+    }
+  }
+
+  Future<List<Hostel>> _getFeaturedHostels() async {
+    try {
+      final query = _firestore
+          .collection('hostels')
+          .where('isAvailable', isEqualTo: true)
+          .limit(5);
+
+      final snapshot = await query.get();
+      return _parseHostelDocuments(snapshot.docs);
+    } on FirebaseException catch (e) {
+      debugPrint('Featured hostels query error: ${e.code}');
+      return [];
+    }
+  }
+
+  Future<List<Hostel>> _getRecentHostels() async {
+    try {
+      final query = _firestore
+          .collection('hostels')
+          .where('isAvailable', isEqualTo: true)
+          .orderBy('createdAt', descending: true)
+          .limit(3);
+
+      final snapshot = await query.get();
+      return _parseHostelDocuments(snapshot.docs);
+    } on FirebaseException catch (e) {
+      if (e.code == 'failed-precondition') {
+        debugPrint(
+            'Recent hostels query needs index. Falling back to unordered.');
+        // Fallback to query without ordering
+        final fallbackQuery = _firestore
+            .collection('hostels')
+            .where('isAvailable', isEqualTo: true)
+            .limit(3);
+        final snapshot = await fallbackQuery.get();
+        return _parseHostelDocuments(snapshot.docs);
+      }
+      debugPrint('Recent hostels query error: ${e.code}');
+      return [];
+    }
+  }
+
+  List<Hostel> _parseHostelDocuments(List<DocumentSnapshot> docs) {
+    return docs
+        .map((doc) {
+          try {
+            return Hostel.fromFirestore(
+                doc as DocumentSnapshot<Map<String, dynamic>>);
+          } catch (e) {
+            debugPrint('Error parsing hostel ${doc.id}: $e');
+            debugPrint('Document data: ${doc.data()}');
+            return null;
+          }
+        })
+        .whereType<Hostel>()
+        .toList();
+  }
+
+// Removed duplicate _getFeaturedHostels function to resolve the conflict.
+
+// Removed duplicate _getRecentHostels function to resolve the conflict.
 
   @override
   void dispose() {
@@ -414,7 +544,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildFeaturedListings() {
-    if (_isLoading) {
+    if (_isLoading.value) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
         child: Center(child: CircularProgressIndicator()),
@@ -804,7 +934,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildRecentListings() {
-    if (_isLoading) {
+    if (_isLoading.value) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
         child: Center(child: CircularProgressIndicator()),

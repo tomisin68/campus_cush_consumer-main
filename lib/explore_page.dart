@@ -12,11 +12,12 @@ class ExplorePage extends StatefulWidget {
   State<ExplorePage> createState() => _ExplorePageState();
 }
 
-class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin {
+class _ExplorePageState extends State<ExplorePage>
+    with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _saveController;
   late AnimationController _likeController;
-  
+
   String _selectedCategory = 'All';
   int _selectedFilterIndex = 0;
   bool _showMapView = false;
@@ -109,7 +110,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF0A0E21);
+    const primaryColor = Color(0xFF0A0E21);
     final cardColor = isDarkMode ? Colors.grey[900] : Colors.grey[100];
     final textColor = isDarkMode ? Colors.white : Colors.black;
 
@@ -125,8 +126,8 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
             expandedHeight: _showMapView ? 0 : 180,
             floating: false,
             pinned: true,
-            flexibleSpace: _showMapView 
-                ? null 
+            flexibleSpace: _showMapView
+                ? null
                 : FlexibleSpaceBar(
                     collapseMode: CollapseMode.pin,
                     background: Container(
@@ -161,8 +162,8 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                     (context, index) {
                       final property = _properties[index];
                       return _buildPropertyCard(
-                        property, 
-                        textColor, 
+                        property,
+                        textColor,
                         cardColor!,
                         index == _properties.length - 1,
                       );
@@ -281,19 +282,20 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
             },
             child: Container(
               width: 80,
-              margin: EdgeInsets.only(right: index == _categories.length - 1 ? 0 : 12),
+              margin: EdgeInsets.only(
+                  right: index == _categories.length - 1 ? 0 : 12),
               child: Column(
                 children: [
                   Container(
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: isSelected 
+                      color: isSelected
                           ? const Color(0xFF0A0E21).withOpacity(0.2)
                           : Colors.grey.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isSelected 
+                        color: isSelected
                             ? const Color(0xFF0A0E21)
                             : Colors.transparent,
                         width: 2,
@@ -301,7 +303,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                     ),
                     child: Icon(
                       category['icon'],
-                      color: isSelected 
+                      color: isSelected
                           ? const Color(0xFF0A0E21)
                           : Colors.grey[600],
                       size: 28,
@@ -312,10 +314,9 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                     category['label'],
                     style: GoogleFonts.roboto(
                       fontSize: 12,
-                      color: isSelected 
-                          ? const Color(0xFF0A0E21)
-                          : textColor,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? const Color(0xFF0A0E21) : textColor,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 ],
@@ -337,7 +338,8 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
           final filter = _filters[index];
           final isSelected = _selectedFilterIndex == index;
           return Padding(
-            padding: EdgeInsets.only(right: index == _filters.length - 1 ? 0 : 8),
+            padding:
+                EdgeInsets.only(right: index == _filters.length - 1 ? 0 : 8),
             child: ChoiceChip(
               label: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -365,7 +367,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
-                  color: isSelected 
+                  color: isSelected
                       ? const Color(0xFF0A0E21)
                       : Colors.grey.withOpacity(0.3),
                 ),
@@ -378,8 +380,8 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
   }
 
   Widget _buildPropertyCard(
-    Map<String, dynamic> property, 
-    Color textColor, 
+    Map<String, dynamic> property,
+    Color textColor,
     Color cardColor,
     bool isLast,
   ) {
@@ -402,7 +404,8 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                 children: [
                   // Property Image
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
                     child: Image.asset(
                       'assets/${property['image']}.jpg',
                       height: 200,
@@ -410,13 +413,14 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                       fit: BoxFit.cover,
                     ),
                   ),
-                  
+
                   // Price Tag
                   Positioned(
                     bottom: 16,
                     left: 16,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: const Color(0xFF0A0E21).withOpacity(0.8),
                         borderRadius: BorderRadius.circular(20),
@@ -430,7 +434,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                       ),
                     ),
                   ),
-                  
+
                   // Save Button
                   Positioned(
                     top: 16,
@@ -460,7 +464,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                       ),
                     ),
                   ),
-                  
+
                   // Like Button
                   Positioned(
                     top: 60,
@@ -492,7 +496,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                   ),
                 ],
               ),
-              
+
               // Property Details
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -516,7 +520,8 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                         ),
                         Row(
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 18),
+                            const Icon(Icons.star,
+                                color: Colors.amber, size: 18),
                             const SizedBox(width: 4),
                             Text(
                               property['rating'].toString(),
@@ -530,12 +535,13 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 4),
-                    
+
                     Row(
                       children: [
-                        Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                        Icon(Icons.location_on,
+                            size: 16, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
                           property['location'],
@@ -546,9 +552,9 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Amenities
                     Wrap(
                       spacing: 8,
@@ -559,7 +565,8 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                         if (property['amenities'].contains('kitchen'))
                           _buildAmenityChip(Icons.kitchen, 'Kitchen'),
                         if (property['amenities'].contains('laundry'))
-                          _buildAmenityChip(Icons.local_laundry_service, 'Laundry'),
+                          _buildAmenityChip(
+                              Icons.local_laundry_service, 'Laundry'),
                         if (property['amenities'].contains('breakfast'))
                           _buildAmenityChip(Icons.free_breakfast, 'Breakfast'),
                         if (property['amenities'].contains('gym'))
@@ -568,9 +575,9 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                           _buildAmenityChip(Icons.pool, 'Pool'),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Action Buttons
                     Row(
                       children: [
@@ -578,7 +585,8 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              side: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                              side: BorderSide(
+                                  color: Colors.grey.withOpacity(0.3)),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -686,7 +694,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
             ),
           ),
         ),
-        
+
         // Search bar overlay
         Positioned(
           top: 16,
@@ -721,7 +729,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
             ),
           ),
         ),
-        
+
         // Bottom sheet with property previews
         Positioned(
           bottom: 0,
@@ -731,7 +739,8 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
             height: 180,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.2),
@@ -790,7 +799,8 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
               child: Image.asset(
                 'assets/${property['image']}.jpg',
                 height: 100,
@@ -816,7 +826,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.star, color: Colors.amber, size: 14),
+                      const Icon(Icons.star, color: Colors.amber, size: 14),
                       const SizedBox(width: 4),
                       Text(
                         property['rating'].toString(),
@@ -912,7 +922,6 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                             },
                           ),
                           const SizedBox(height: 16),
-                          
                           Text(
                             'Distance from Campus (miles)',
                             style: GoogleFonts.roboto(
@@ -937,7 +946,6 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                             },
                           ),
                           const SizedBox(height: 16),
-                          
                           Text(
                             'Amenities',
                             style: GoogleFonts.roboto(
@@ -950,16 +958,23 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              _buildFilterChip('WiFi', Icons.wifi, wifi, (value) {
+                              _buildFilterChip('WiFi', Icons.wifi, wifi,
+                                  (value) {
                                 setModalState(() => wifi = value);
                               }),
-                              _buildFilterChip('Kitchen', Icons.kitchen, kitchen, (value) {
+                              _buildFilterChip(
+                                  'Kitchen', Icons.kitchen, kitchen, (value) {
                                 setModalState(() => kitchen = value);
                               }),
-                              _buildFilterChip('Laundry', Icons.local_laundry_service, laundry, (value) {
+                              _buildFilterChip(
+                                  'Laundry',
+                                  Icons.local_laundry_service,
+                                  laundry, (value) {
                                 setModalState(() => laundry = value);
                               }),
-                              _buildFilterChip('Verified Only', Icons.verified, verifiedOnly, (value) {
+                              _buildFilterChip(
+                                  'Verified Only', Icons.verified, verifiedOnly,
+                                  (value) {
                                 setModalState(() => verifiedOnly = value);
                               }),
                             ],
@@ -969,14 +984,14 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                       ),
                     ),
                   ),
-                  
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                            side:
+                                BorderSide(color: Colors.grey.withOpacity(0.3)),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -1026,13 +1041,14 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
       },
     );
   }
-  
-  Widget _buildFilterChip(String label, IconData icon, bool isSelected, Function(bool) onSelected) {
-  return FilterChip(
-    label: Text(label),
-    avatar: Icon(icon),
-    selected: isSelected,
-    onSelected: onSelected,
-  );
-}
+
+  Widget _buildFilterChip(
+      String label, IconData icon, bool isSelected, Function(bool) onSelected) {
+    return FilterChip(
+      label: Text(label),
+      avatar: Icon(icon),
+      selected: isSelected,
+      onSelected: onSelected,
+    );
+  }
 }

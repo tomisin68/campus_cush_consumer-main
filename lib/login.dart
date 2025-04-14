@@ -84,12 +84,14 @@ class _LoginPageState extends State<LoginPage> {
                 controller: resetController,
                 decoration: InputDecoration(
                   labelText: 'Email address',
-                  prefixIcon: const Icon(Icons.email_outlined, color: Colors.blue),
+                  prefixIcon:
+                      const Icon(Icons.email_outlined, color: Colors.blue),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+                  fillColor:
+                      Theme.of(context).colorScheme.surfaceContainerLowest,
                 ),
               ),
               const SizedBox(height: 24),
@@ -100,18 +102,21 @@ class _LoginPageState extends State<LoginPage> {
                     final email = resetController.text.trim();
                     if (email.isNotEmpty) {
                       try {
-                        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                        await FirebaseAuth.instance
+                            .sendPasswordResetEmail(email: email);
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Password reset link sent to your email'),
+                          const SnackBar(
+                            content:
+                                Text('Password reset link sent to your email'),
                             backgroundColor: Colors.green,
                           ),
                         );
                       } on FirebaseAuthException catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(e.message ?? 'Error sending reset link'),
+                            content:
+                                Text(e.message ?? 'Error sending reset link'),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -128,7 +133,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: Text(
                     'Send Reset Link',
-                    style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: GoogleFonts.roboto(
+                        fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
@@ -186,7 +192,8 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _emailController,
                     decoration: InputDecoration(
                       hintText: 'Email address',
-                      prefixIcon: const Icon(Icons.email_outlined, color: Colors.blue),
+                      prefixIcon:
+                          const Icon(Icons.email_outlined, color: Colors.blue),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -198,7 +205,8 @@ class _LoginPageState extends State<LoginPage> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                          .hasMatch(value)) {
                         return 'Please enter a valid email';
                       }
                       return null;
@@ -209,13 +217,17 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _passwordController,
                     decoration: InputDecoration(
                       hintText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline, color: Colors.blue),
+                      prefixIcon:
+                          const Icon(Icons.lock_outline, color: Colors.blue),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _showPassword ? Icons.visibility : Icons.visibility_off,
+                          _showPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                           color: Colors.blue,
                         ),
-                        onPressed: () => setState(() => _showPassword = !_showPassword),
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -261,7 +273,8 @@ class _LoginPageState extends State<LoginPage> {
                         ? const CircularProgressIndicator(color: Colors.white)
                         : Text(
                             'Sign In',
-                            style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
+                            style: GoogleFonts.roboto(
+                                fontSize: 16, fontWeight: FontWeight.w500),
                           ),
                   ),
                   const SizedBox(height: 24),
@@ -279,7 +292,8 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const SignupPage()),
+                            MaterialPageRoute(
+                                builder: (context) => const SignupPage()),
                           );
                         },
                         child: Text(

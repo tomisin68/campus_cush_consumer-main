@@ -71,7 +71,7 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF0A0E21);
+    const primaryColor = Color(0xFF0A0E21);
     final cardColor = isDarkMode ? Colors.grey[900] : Colors.grey[100];
     final textColor = isDarkMode ? Colors.white : Colors.black;
 
@@ -82,13 +82,14 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
         children: [
           // Filter Chips
           _buildFilterChips(textColor),
-          
+
           // Saved Items List
           Expanded(
             child: _savedItems.isEmpty
                 ? _buildEmptyState(textColor)
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: _savedItems.length,
                     itemBuilder: (context, index) {
                       final item = _savedItems[index];
@@ -133,7 +134,7 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
 
   Widget _buildFilterChips(Color textColor) {
     final filters = ['All', 'Private', 'Shared', 'Studio', 'Near Campus'];
-    
+
     return SizedBox(
       height: 50,
       child: ListView.builder(
@@ -154,14 +155,18 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
               },
               selectedColor: const Color(0xFF0A0E21).withOpacity(0.2),
               labelStyle: GoogleFonts.roboto(
-                color: _currentFilter == filter ? const Color(0xFF0A0E21) : textColor,
-                fontWeight: _currentFilter == filter ? FontWeight.bold : FontWeight.normal,
+                color: _currentFilter == filter
+                    ? const Color(0xFF0A0E21)
+                    : textColor,
+                fontWeight: _currentFilter == filter
+                    ? FontWeight.bold
+                    : FontWeight.normal,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
-                  color: _currentFilter == filter 
-                      ? const Color(0xFF0A0E21) 
+                  color: _currentFilter == filter
+                      ? const Color(0xFF0A0E21)
                       : Colors.grey.withOpacity(0.3),
                 ),
               ),
@@ -172,7 +177,8 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildSavedItemCard(Map<String, dynamic> item, Color textColor, Color cardColor) {
+  Widget _buildSavedItemCard(
+      Map<String, dynamic> item, Color textColor, Color cardColor) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
@@ -191,7 +197,8 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
               children: [
                 // Item Image
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
                   child: Image.asset(
                     'assets/${item['image']}.jpg',
                     height: 180,
@@ -199,13 +206,14 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                     fit: BoxFit.cover,
                   ),
                 ),
-                
+
                 // Price Tag
                 Positioned(
                   bottom: 16,
                   left: 16,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFF0A0E21).withOpacity(0.8),
                       borderRadius: BorderRadius.circular(20),
@@ -219,7 +227,7 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-                
+
                 // Save Button
                 Positioned(
                   top: 16,
@@ -254,7 +262,7 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                 ),
               ],
             ),
-            
+
             // Item Details
             Padding(
               padding: const EdgeInsets.all(16),
@@ -278,7 +286,7 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                       ),
                       Row(
                         children: [
-                          Icon(Icons.star, color: Colors.amber, size: 18),
+                          const Icon(Icons.star, color: Colors.amber, size: 18),
                           const SizedBox(width: 4),
                           Text(
                             item['rating'].toString(),
@@ -292,12 +300,13 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 4),
-                  
+
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                      Icon(Icons.location_on,
+                          size: 16, color: Colors.grey[600]),
                       const SizedBox(width: 4),
                       Text(
                         item['location'],
@@ -308,13 +317,14 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFF0A0E21).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -329,7 +339,8 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFF0A0E21).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -344,9 +355,9 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Amenities
                   Wrap(
                     spacing: 8,
@@ -355,15 +366,15 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                       _buildAmenityChip(Icons.wifi, 'WiFi'),
                       _buildAmenityChip(Icons.local_dining, 'Kitchen'),
                       _buildAmenityChip(Icons.local_laundry_service, 'Laundry'),
-                      if (item['amenities'].contains('pool')) 
+                      if (item['amenities'].contains('pool'))
                         _buildAmenityChip(Icons.pool, 'Pool'),
-                      if (item['amenities'].contains('gym')) 
+                      if (item['amenities'].contains('gym'))
                         _buildAmenityChip(Icons.fitness_center, 'Gym'),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Action Buttons
                   Row(
                     children: [
@@ -371,7 +382,8 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            side: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                            side:
+                                BorderSide(color: Colors.grey.withOpacity(0.3)),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -545,7 +557,6 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                   const SizedBox(height: 16),
                   const Divider(height: 1),
                   const SizedBox(height: 16),
-                  
                   Text(
                     'Price Range (per night)',
                     style: GoogleFonts.roboto(
@@ -568,7 +579,6 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                     },
                   ),
                   const SizedBox(height: 16),
-                  
                   Text(
                     'Amenities',
                     style: GoogleFonts.roboto(
@@ -584,26 +594,32 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
                       _buildFilterChip('WiFi', Icons.wifi, wifi, (value) {
                         setModalState(() => wifi = value);
                       }),
-                      _buildFilterChip('Breakfast', Icons.free_breakfast, breakfast, (value) {
+                      _buildFilterChip(
+                          'Breakfast', Icons.free_breakfast, breakfast,
+                          (value) {
                         setModalState(() => breakfast = value);
                       }),
-                      _buildFilterChip('Private Bath', Icons.bathtub, privateBathroom, (value) {
+                      _buildFilterChip(
+                          'Private Bath', Icons.bathtub, privateBathroom,
+                          (value) {
                         setModalState(() => privateBathroom = value);
                       }),
-                      _buildFilterChip('Parking', Icons.local_parking, false, (value) {}),
-                      _buildFilterChip('Gym', Icons.fitness_center, false, (value) {}),
+                      _buildFilterChip(
+                          'Parking', Icons.local_parking, false, (value) {}),
+                      _buildFilterChip(
+                          'Gym', Icons.fitness_center, false, (value) {}),
                       _buildFilterChip('Pool', Icons.pool, false, (value) {}),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                            side:
+                                BorderSide(color: Colors.grey.withOpacity(0.3)),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -654,7 +670,8 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildFilterChip(String label, IconData icon, bool selected, Function(bool) onSelected) {
+  Widget _buildFilterChip(
+      String label, IconData icon, bool selected, Function(bool) onSelected) {
     return ChoiceChip(
       label: Row(
         mainAxisSize: MainAxisSize.min,
@@ -673,7 +690,8 @@ class _SavedPageState extends State<SavedPage> with TickerProviderStateMixin {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: selected ? const Color(0xFF0A0E21) : Colors.grey.withOpacity(0.3),
+          color:
+              selected ? const Color(0xFF0A0E21) : Colors.grey.withOpacity(0.3),
         ),
       ),
     );
