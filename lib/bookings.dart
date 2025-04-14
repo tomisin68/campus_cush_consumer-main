@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
@@ -21,7 +23,12 @@ class _BookingsPageState extends State<BookingsPage> {
       price: 245,
       status: 'Confirmed ✅',
       image: 'assets/house1.jpg',
-      amenities: ['🛏️ Double bed', '🚿 Private bath', '🛁 Hot shower', '📶 Free WiFi'],
+      amenities: [
+        '🛏️ Double bed',
+        '🚿 Private bath',
+        '🛁 Hot shower',
+        '📶 Free WiFi'
+      ],
     ),
     Booking(
       id: '#CAMPUS456',
@@ -44,7 +51,12 @@ class _BookingsPageState extends State<BookingsPage> {
       price: 275,
       status: 'Completed 🎉',
       image: 'assets/house3.jpg',
-      amenities: ['🛏️ Bunk bed', '🍳 Breakfast', '🏖️ Beachfront', '📶 Free WiFi'],
+      amenities: [
+        '🛏️ Bunk bed',
+        '🍳 Breakfast',
+        '🏖️ Beachfront',
+        '📶 Free WiFi'
+      ],
     ),
   ];
 
@@ -57,7 +69,12 @@ class _BookingsPageState extends State<BookingsPage> {
       price: 190,
       status: 'Cancelled ❌',
       image: 'assets/house5.jpg',
-      amenities: ['🛏️ Single bed', '🌳 Garden view', '🚿 Shared bath', '📶 Free WiFi'],
+      amenities: [
+        '🛏️ Single bed',
+        '🌳 Garden view',
+        '🚿 Shared bath',
+        '📶 Free WiFi'
+      ],
     ),
   ];
 
@@ -127,9 +144,13 @@ class _BookingsPageState extends State<BookingsPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blueAccent.withOpacity(0.2) : Colors.transparent,
+            color: isSelected
+                ? Colors.blueAccent.withOpacity(0.2)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: isSelected ? Border.all(color: Colors.blueAccent, width: 1.5) : null,
+            border: isSelected
+                ? Border.all(color: Colors.blueAccent, width: 1.5)
+                : null,
           ),
           child: Text(
             label,
@@ -213,7 +234,8 @@ class _BookingsPageState extends State<BookingsPage> {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 child: Image.asset(
                   booking.image,
                   height: 160,
@@ -225,7 +247,8 @@ class _BookingsPageState extends State<BookingsPage> {
                 top: 12,
                 left: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(20),
@@ -248,7 +271,8 @@ class _BookingsPageState extends State<BookingsPage> {
                 bottom: 12,
                 left: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(12),
@@ -288,7 +312,8 @@ class _BookingsPageState extends State<BookingsPage> {
                     ),
                     Text(
                       booking.id,
-                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      style:
+                          const TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                   ],
                 ),
@@ -297,11 +322,13 @@ class _BookingsPageState extends State<BookingsPage> {
                 // Location
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, color: Colors.blueAccent, size: 16),
+                    const Icon(Icons.location_on_outlined,
+                        color: Colors.blueAccent, size: 16),
                     const SizedBox(width: 4),
                     Text(
                       booking.location,
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -310,11 +337,13 @@ class _BookingsPageState extends State<BookingsPage> {
                 // Date
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined, color: Colors.blueAccent, size: 16),
+                    const Icon(Icons.calendar_today_outlined,
+                        color: Colors.blueAccent, size: 16),
                     const SizedBox(width: 4),
                     Text(
                       booking.date,
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -328,10 +357,12 @@ class _BookingsPageState extends State<BookingsPage> {
                       .map((a) => Chip(
                             label: Text(a),
                             backgroundColor: const Color(0xFF2A2D40),
-                            labelStyle: const TextStyle(color: Colors.white70, fontSize: 12),
+                            labelStyle: const TextStyle(
+                                color: Colors.white70, fontSize: 12),
                             padding: EdgeInsets.zero,
                             visualDensity: VisualDensity.compact,
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                           ))
                       .toList(),
                 ),
@@ -360,7 +391,8 @@ class _BookingsPageState extends State<BookingsPage> {
               foregroundColor: Colors.white,
               side: const BorderSide(color: Colors.white24),
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {},
           ),
@@ -369,12 +401,15 @@ class _BookingsPageState extends State<BookingsPage> {
         Expanded(
           child: ElevatedButton.icon(
             icon: const Icon(Icons.receipt_outlined, size: 18),
-            label: Text(booking.status.contains('Pending') ? 'Pay Now' : 'View Receipt'),
+            label: Text(booking.status.contains('Pending')
+                ? 'Pay Now'
+                : 'View Receipt'),
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
               backgroundColor: Colors.blueAccent,
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {},
           ),
@@ -394,7 +429,8 @@ class _BookingsPageState extends State<BookingsPage> {
               foregroundColor: Colors.white,
               side: const BorderSide(color: Colors.white24),
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {},
           ),
@@ -408,7 +444,8 @@ class _BookingsPageState extends State<BookingsPage> {
               foregroundColor: Colors.white,
               side: const BorderSide(color: Colors.white24),
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {},
           ),
@@ -427,7 +464,8 @@ class _BookingsPageState extends State<BookingsPage> {
           foregroundColor: Colors.white,
           side: const BorderSide(color: Colors.white24),
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         onPressed: () {},
       ),
@@ -448,7 +486,7 @@ class _BookingsPageState extends State<BookingsPage> {
 }
 
 class _FilterModalContent extends StatefulWidget {
-  const _FilterModalContent({super.key});
+  const _FilterModalContent();
 
   @override
   _FilterModalContentState createState() => _FilterModalContentState();
@@ -500,8 +538,8 @@ class _FilterModalContentState extends State<_FilterModalContent> {
                       colorScheme: const ColorScheme.dark(
                         primary: Colors.blueAccent,
                         surface: Color(0xFF1D1F33),
-                      ), dialogBackgroundColor: const Color(0xFF0A0E21),
-
+                      ),
+                      dialogBackgroundColor: const Color(0xFF0A0E21),
                     ),
                     child: child!,
                   );
@@ -519,7 +557,8 @@ class _FilterModalContentState extends State<_FilterModalContent> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.date_range_outlined, color: Colors.blueAccent),
+                  const Icon(Icons.date_range_outlined,
+                      color: Colors.blueAccent),
                   const SizedBox(width: 12),
                   Text(
                     _selectedDateRange == null
@@ -537,7 +576,8 @@ class _FilterModalContentState extends State<_FilterModalContent> {
           // Sort Options
           const Text(
             'Sort By',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+            style: TextStyle(
+                color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -558,7 +598,8 @@ class _FilterModalContentState extends State<_FilterModalContent> {
                 foregroundColor: Colors.white,
                 backgroundColor: Colors.blueAccent,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () {
                 // Apply filters logic here
@@ -584,10 +625,12 @@ class _FilterModalContentState extends State<_FilterModalContent> {
       onSelected: (_) => setState(() => _selectedSortOption = value),
       selectedColor: Colors.blueAccent.withOpacity(0.2),
       backgroundColor: const Color(0xFF2A2D40),
-      labelStyle: TextStyle(color: isSelected ? Colors.blueAccent : Colors.white),
+      labelStyle:
+          TextStyle(color: isSelected ? Colors.blueAccent : Colors.white),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: isSelected ? Colors.blueAccent : Colors.white24),
+        side:
+            BorderSide(color: isSelected ? Colors.blueAccent : Colors.white24),
       ),
     );
   }

@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable, library_private_types_in_public_api, use_build_context_synchronously, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,8 +29,8 @@ class _SignupPageState extends State<SignupPage> {
       setState(() => _isLoading = true);
 
       try {
-        UserCredential userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
+        UserCredential userCredential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
@@ -36,7 +38,7 @@ class _SignupPageState extends State<SignupPage> {
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => HomePage()),
+            MaterialPageRoute(builder: (context) => const HomePage()),
           );
         }
       } on FirebaseAuthException catch (e) {
@@ -117,7 +119,10 @@ class _SignupPageState extends State<SignupPage> {
                     'aliquam nisl, eget ultricies nisl nisl eget nisl.',
                     style: GoogleFonts.roboto(
                       fontSize: 14,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.7),
                     ),
                   ),
                 ),
@@ -137,7 +142,8 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                   child: Text(
                     'I Understand',
-                    style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: GoogleFonts.roboto(
+                        fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
@@ -196,7 +202,8 @@ class _SignupPageState extends State<SignupPage> {
                     controller: _emailController,
                     decoration: InputDecoration(
                       hintText: 'Email address',
-                      prefixIcon: const Icon(Icons.email_outlined, color: Colors.blue),
+                      prefixIcon:
+                          const Icon(Icons.email_outlined, color: Colors.blue),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: colorScheme.primary),
@@ -213,7 +220,8 @@ class _SignupPageState extends State<SignupPage> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                          .hasMatch(value)) {
                         return 'Please enter a valid email';
                       }
                       return null;
@@ -224,13 +232,17 @@ class _SignupPageState extends State<SignupPage> {
                     controller: _passwordController,
                     decoration: InputDecoration(
                       hintText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline, color: Colors.blue),
+                      prefixIcon:
+                          const Icon(Icons.lock_outline, color: Colors.blue),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _showPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          _showPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                           color: Colors.blue,
                         ),
-                        onPressed: () => setState(() => _showPassword = !_showPassword),
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -259,13 +271,17 @@ class _SignupPageState extends State<SignupPage> {
                     controller: _confirmPasswordController,
                     decoration: InputDecoration(
                       hintText: 'Confirm password',
-                      prefixIcon: const Icon(Icons.lock_outline, color: Colors.blue),
+                      prefixIcon:
+                          const Icon(Icons.lock_outline, color: Colors.blue),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _showConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          _showConfirmPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                           color: Colors.blue,
                         ),
-                        onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
+                        onPressed: () => setState(
+                            () => _showConfirmPassword = !_showConfirmPassword),
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -294,8 +310,10 @@ class _SignupPageState extends State<SignupPage> {
                     children: [
                       Checkbox(
                         value: _agreeToPolicy,
-                        onChanged: (value) => setState(() => _agreeToPolicy = value ?? false),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        onChanged: (value) =>
+                            setState(() => _agreeToPolicy = value ?? false),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4)),
                         side: BorderSide(color: colorScheme.outline),
                       ),
                       Expanded(
@@ -346,7 +364,8 @@ class _SignupPageState extends State<SignupPage> {
                           )
                         : Text(
                             'Continue',
-                            style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
+                            style: GoogleFonts.roboto(
+                                fontSize: 16, fontWeight: FontWeight.w500),
                           ),
                   ),
                   const SizedBox(height: 24),
@@ -364,7 +383,8 @@ class _SignupPageState extends State<SignupPage> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const LoginPage()),
+                            MaterialPageRoute(
+                                builder: (context) => const LoginPage()),
                           );
                         },
                         child: Text(

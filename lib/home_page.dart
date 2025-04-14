@@ -1,13 +1,14 @@
+// ignore_for_file: dead_code, unused_import, deprecated_member_use
+
 import 'package:flutter/material.dart';
-// ignore: unused_import
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:campus_cush_consumer/bookings.dart';
 import 'package:campus_cush_consumer/chat_page.dart';
 import 'package:campus_cush_consumer/profile_page.dart';
 import 'package:campus_cush_consumer/explore_page.dart';
-import 'package:campus_cush_consumer/saved.dart'; // Add other pages for navigation
-
+import 'package:campus_cush_consumer/saved.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,32 +21,72 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _currentIndex = 0;
   bool _searchExpanded = false;
   final TextEditingController _searchController = TextEditingController();
-  
-  // Animation controllers for like and save buttons
+
+  // Animation controllers
   late AnimationController _likeController;
   late AnimationController _saveController;
-  
+
   // Track liked and saved states
   final Map<String, bool> _likedStatus = {};
   final Map<String, bool> _savedStatus = {};
+
+  // Firebase Database
+  final DatabaseReference _databaseRef =
+      FirebaseDatabase.instance.ref('hostels');
+  List<Hostel> _featuredHostels = [];
+  List<Hostel> _recentHostels = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _likeController = AnimationController(vsync: this);
     _saveController = AnimationController(vsync: this);
-    
-    // Initialize all hostel cards as not liked/saved
-    for (var image in ['house1', 'house2', 'house3', 'house4', 'house5']) {
-      _likedStatus[image] = false;
-      _savedStatus[image] = false;
+    _loadHostels();
+  }
+
+  Future<void> _loadHostels() async {
+    try {
+      // Get featured hostels (first 5)
+      final featuredSnapshot = await _databaseRef.limitToFirst(5).get();
+      final featuredHostels = _processSnapshot(featuredSnapshot);
+
+      // Get recent hostels (last 3 by createdAt)
+      final recentSnapshot =
+          await _databaseRef.orderByChild('createdAt').limitToLast(3).get();
+      final recentHostels = _processSnapshot(recentSnapshot);
+
+      setState(() {
+        _featuredHostels = featuredHostels;
+        _recentHostels = recentHostels;
+        _isLoading = false;
+
+        // Initialize liked/saved status
+        for (var hostel in [..._featuredHostels, ..._recentHostels]) {
+          _likedStatus[hostel.id] = false;
+          _savedStatus[hostel.id] = false;
+        }
+      });
+    } catch (e) {
+      debugPrint('Error loading hostels: $e');
+      setState(() => _isLoading = false);
     }
+  }
+
+  List<Hostel> _processSnapshot(DataSnapshot snapshot) {
+    if (!snapshot.exists) return [];
+
+    final hostelsMap = snapshot.value as Map<dynamic, dynamic>;
+    return hostelsMap.entries.map((entry) {
+      return Hostel.fromMap(entry.key, Map<String, dynamic>.from(entry.value));
+    }).toList();
   }
 
   @override
   void dispose() {
     _likeController.dispose();
     _saveController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -100,11 +141,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         IconButton(
           icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
           onPressed: () {
-             Navigator.push(
+            Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ChatPage()),
             );
-            // Implement chat functionality
           },
         ),
         IconButton(
@@ -161,23 +201,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         prefixIcon: const Icon(Icons.search, color: Colors.white54),
         suffixIcon: IconButton(
           icon: const Icon(Icons.tune, color: Colors.white54),
-          onPressed: () {
-            // Show filter modal
-            _showFilterModal(context);
-          },
+          onPressed: () => _showFilterModal(context),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 16),
       ),
       style: const TextStyle(color: Colors.white),
-      onTap: () {
-        setState(() {
-          _searchExpanded = true;
-        });
-      },
-      onSubmitted: (value) {
-        // Implement search functionality
-        _performSearch(value);
-      },
+      onTap: () => setState(() => _searchExpanded = true),
+      onSubmitted: (value) => _performSearch(value),
     );
   }
 
@@ -219,142 +249,128 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
- void _showFilterModal(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: const Color(0xFF1D1F33),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (BuildContext context, StateSetter setModalState) {
-          double priceRange = 100;
-          bool wifi = false;
-          bool breakfast = false;
-          bool privateBathroom = false;
+  void _showFilterModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1D1F33),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            double priceRange = 100;
+            bool wifi = false;
+            bool breakfast = false;
+            bool privateBathroom = false;
 
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Filters',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Price Range',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
-                ),
-                Slider(
-                  value: priceRange,
-                  min: 0,
-                  max: 500,
-                  divisions: 10,
-                  label: '\$${priceRange.round()}',
-                  activeColor: Colors.blueAccent,
-                  inactiveColor: Colors.white24,
-                  onChanged: (value) {
-                    setModalState(() {
-                      priceRange = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Amenities',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
-                ),
-                CheckboxListTile(
-                  title: const Text(
-                    'Free WiFi',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  value: wifi,
-                  activeColor: Colors.blueAccent,
-                  onChanged: (value) {
-                    setModalState(() {
-                      wifi = value!;
-                    });
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text(
-                    'Breakfast Included',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  value: breakfast,
-                  activeColor: Colors.blueAccent,
-                  onChanged: (value) {
-                    setModalState(() {
-                      breakfast = value!;
-                    });
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text(
-                    'Private Bathroom',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  value: privateBathroom,
-                  activeColor: Colors.blueAccent,
-                  onChanged: (value) {
-                    setModalState(() {
-                      privateBathroom = value!;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Filters',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
                     ),
-                    onPressed: () {
-                      // Apply filters
-                      Navigator.pop(context);
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Price Range',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Slider(
+                    value: priceRange,
+                    min: 0,
+                    max: 500,
+                    divisions: 10,
+                    label: '\$${priceRange.round()}',
+                    activeColor: Colors.blueAccent,
+                    inactiveColor: Colors.white24,
+                    onChanged: (value) {
+                      setModalState(() => priceRange = value);
                     },
-                    child: const Text(
-                      'Apply Filters',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Amenities',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                    ),
+                  ),
+                  CheckboxListTile(
+                    title: const Text(
+                      'Free WiFi',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    value: wifi,
+                    activeColor: Colors.blueAccent,
+                    onChanged: (value) => setModalState(() => wifi = value!),
+                  ),
+                  CheckboxListTile(
+                    title: const Text(
+                      'Breakfast Included',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    value: breakfast,
+                    activeColor: Colors.blueAccent,
+                    onChanged: (value) =>
+                        setModalState(() => breakfast = value!),
+                  ),
+                  CheckboxListTile(
+                    title: const Text(
+                      'Private Bathroom',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    value: privateBathroom,
+                    activeColor: Colors.blueAccent,
+                    onChanged: (value) =>
+                        setModalState(() => privateBathroom = value!),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onPressed: () {
+                        // Apply filters
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        'Apply Filters',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   void _performSearch(String query) {
-    // Implement search functionality
     debugPrint('Searching for: $query');
-    // You would typically filter your data here and update the UI
+    // Implement search functionality
   }
 
   Widget _buildFilterChips() {
@@ -362,15 +378,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _buildFilterChip('Under \$20', Icons.attach_money),
+          _buildFilterChip('Under ₦100k', Icons.attach_money),
           const SizedBox(width: 8),
-          _buildFilterChip('Near me', Icons.location_on),
+          _buildFilterChip('Near campus', Icons.location_on),
           const SizedBox(width: 8),
           _buildFilterChip('Private rooms', Icons.king_bed),
           const SizedBox(width: 8),
           _buildFilterChip('Free WiFi', Icons.wifi),
           const SizedBox(width: 8),
-          _buildFilterChip('Breakfast', Icons.free_breakfast),
+          _buildFilterChip('Self-contained', Icons.home),
         ],
       ),
     );
@@ -382,7 +398,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       label: Text(label),
       avatar: Icon(icon, size: 16),
       backgroundColor: const Color(0xFF1D1F33),
-      // ignore: dead_code
       labelStyle: TextStyle(color: selected ? Colors.blueAccent : Colors.white),
       selected: selected,
       onSelected: (bool value) {
@@ -390,7 +405,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       },
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        // ignore: dead_code
         side: BorderSide(color: selected ? Colors.blueAccent : Colors.white12),
       ),
       selectedColor: const Color(0xFF1D1F33),
@@ -399,6 +413,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildFeaturedListings() {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 32),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_featuredHostels.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 32),
+        child: Center(
+          child: Text(
+            'No featured hostels available',
+            style: TextStyle(color: Colors.white70),
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -416,29 +449,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         const SizedBox(height: 16),
         SizedBox(
           height: 280,
-          child: ListView(
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              _buildHostelCard('house1', 'Urban Haven', 'Downtown', 4.8, 45),
-              const SizedBox(width: 16),
-              _buildHostelCard('house2', 'Mountain View', 'Alpine District', 4.9, 65),
-              const SizedBox(width: 16),
-              _buildHostelCard('house3', 'Beach Bunker', 'Coastal Area', 4.7, 55),
-              const SizedBox(width: 16),
-              _buildHostelCard('house4', 'The Loft', 'Arts District', 4.6, 49),
-              const SizedBox(width: 16),
-              _buildHostelCard('house5', 'Garden Retreat', 'Suburbs', 4.5, 39),
-            ],
+            itemCount: _featuredHostels.length,
+            itemBuilder: (context, index) {
+              final hostel = _featuredHostels[index];
+              return Padding(
+                padding: EdgeInsets.only(
+                    right: index == _featuredHostels.length - 1 ? 0 : 16),
+                child: _buildHostelCard(hostel),
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildHostelCard(String image, String name, String location, double rating, int price) {
+  Widget _buildHostelCard(Hostel hostel) {
     return GestureDetector(
-      onTap: () => _navigateToHostelDetails(),
+      onTap: () => _navigateToHostelDetails(hostel),
       child: Container(
         width: 220,
         decoration: BoxDecoration(
@@ -458,13 +489,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Image.asset(
-                    'assets/$image.jpg',
-                    height: 160,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: hostel.imageUrls.isNotEmpty
+                      ? Image.network(
+                          hostel.imageUrls[0],
+                          height: 160,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 160,
+                              color: Colors.grey[800],
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes !=
+                                          null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 160,
+                              color: Colors.grey[800],
+                              child: const Icon(Icons.image_not_supported,
+                                  color: Colors.white),
+                            );
+                          },
+                        )
+                      : Container(
+                          height: 160,
+                          color: Colors.grey[800],
+                          child: const Icon(Icons.image_not_supported,
+                              color: Colors.white),
+                        ),
                 ),
                 Positioned(
                   top: 12,
@@ -486,13 +549,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   bottom: 12,
                   left: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.6),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '\$$price/night',
+                      '₦${hostel.price}/year',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -512,7 +576,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     children: [
                       Expanded(
                         child: Text(
-                          name,
+                          hostel.name,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -527,7 +591,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           GestureDetector(
                             onTap: () {
                               setState(() {
-                                _savedStatus[image] = !_savedStatus[image]!;
+                                _savedStatus[hostel.id] =
+                                    !_savedStatus[hostel.id]!;
                               });
                             },
                             child: SizedBox(
@@ -536,7 +601,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               child: Lottie.asset(
                                 'assets/saved.json',
                                 controller: _saveController,
-                                animate: _savedStatus[image]!,
+                                animate: _savedStatus[hostel.id]!,
                                 onLoaded: (composition) {
                                   _saveController
                                     ..duration = composition.duration
@@ -550,7 +615,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           GestureDetector(
                             onTap: () {
                               setState(() {
-                                _likedStatus[image] = !_likedStatus[image]!;
+                                _likedStatus[hostel.id] =
+                                    !_likedStatus[hostel.id]!;
                               });
                             },
                             child: SizedBox(
@@ -559,7 +625,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               child: Lottie.asset(
                                 'assets/love.json',
                                 controller: _likeController,
-                                animate: _likedStatus[image]!,
+                                animate: _likedStatus[hostel.id]!,
                                 onLoaded: (composition) {
                                   _likeController
                                     ..duration = composition.duration
@@ -575,10 +641,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: Colors.blueAccent, size: 14),
+                      const Icon(Icons.location_on,
+                          color: Colors.blueAccent, size: 14),
                       const SizedBox(width: 4),
                       Text(
-                        location,
+                        hostel.location,
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
@@ -592,7 +659,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       const Icon(Icons.star, color: Colors.amber, size: 14),
                       const SizedBox(width: 4),
                       Text(
-                        rating.toString(),
+                        hostel.rating.toString(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -602,11 +669,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       const Spacer(),
                       Row(
                         children: [
-                          const Icon(Icons.wifi, color: Colors.white54, size: 14),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.local_dining, color: Colors.white54, size: 14),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.ac_unit, color: Colors.white54, size: 14),
+                          if (hostel.features.contains('WiFi'))
+                            const Icon(Icons.wifi,
+                                color: Colors.white54, size: 14),
+                          if (hostel.features.contains('WiFi'))
+                            const SizedBox(width: 8),
+                          if (hostel.features.contains('Kitchen') ||
+                              hostel.features.contains('Shared Kitchen'))
+                            const Icon(Icons.local_dining,
+                                color: Colors.white54, size: 14),
+                          if (hostel.features.contains('Kitchen') ||
+                              hostel.features.contains('Shared Kitchen'))
+                            const SizedBox(width: 8),
+                          if (hostel.features.contains('Air Conditioning'))
+                            const Icon(Icons.ac_unit,
+                                color: Colors.white54, size: 14),
                         ],
                       ),
                     ],
@@ -642,17 +719,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
-              _buildCategoryItem(Icons.beach_access, 'Beach'),
+              _buildCategoryItem(Icons.home, 'Self-contained'),
               const SizedBox(width: 20),
-              _buildCategoryItem(Icons.landscape, 'Mountain'),
+              _buildCategoryItem(Icons.apartment, 'Shared'),
               const SizedBox(width: 20),
-              _buildCategoryItem(Icons.apartment, 'City'),
+              _buildCategoryItem(Icons.king_bed, 'Single Room'),
               const SizedBox(width: 20),
-              _buildCategoryItem(Icons.forest, 'Forest'),
+              _buildCategoryItem(Icons.business, 'Premium'),
               const SizedBox(width: 20),
-              _buildCategoryItem(Icons.castle, 'Historic'),
+              _buildCategoryItem(Icons.people, 'Shared Room'),
               const SizedBox(width: 20),
-              _buildCategoryItem(Icons.directions_bike, 'Adventure'),
+              _buildCategoryItem(Icons.star, 'Top Rated'),
             ],
           ),
         ),
@@ -663,13 +740,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           child: Wrap(
             spacing: 8,
             children: [
-              _buildLocationChip('New York'),
-              _buildLocationChip('Tokyo'),
-              _buildLocationChip('Paris'),
-              _buildLocationChip('Barcelona'),
-              _buildLocationChip('Sydney'),
-              _buildLocationChip('Berlin'),
-              _buildLocationChip('Bali'),
+              _buildLocationChip('Main Campus'),
+              _buildLocationChip('Oke-Baale'),
+              _buildLocationChip('Oke-Fia'),
+              _buildLocationChip('Oja-Oba'),
+              _buildLocationChip('GRA'),
+              _buildLocationChip('Ijebu-Jesa Road'),
+              _buildLocationChip('Ilesa Road'),
             ],
           ),
         ),
@@ -726,13 +803,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildRecentListings() {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 32),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_recentHostels.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 32),
+        child: Center(
+          child: Text(
+            'No recent hostels available',
+            style: TextStyle(color: Colors.white70),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'New on Hostelio',
+            'New on Campus Cush',
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -740,25 +836,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
           const SizedBox(height: 16),
-          ListView(
+          ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _buildVerticalHostelCard('house3', 'Beach Bunker', 'Coastal Area', 4.7, 55),
-              const SizedBox(height: 16),
-              _buildVerticalHostelCard('house5', 'Garden Retreat', 'Suburbs', 4.5, 39),
-              const SizedBox(height: 16),
-              _buildVerticalHostelCard('house2', 'Mountain View', 'Alpine District', 4.9, 65),
-            ],
+            itemCount: _recentHostels.length,
+            itemBuilder: (context, index) {
+              final hostel = _recentHostels[index];
+              return Padding(
+                padding: EdgeInsets.only(
+                    bottom: index == _recentHostels.length - 1 ? 0 : 16),
+                child: _buildVerticalHostelCard(hostel),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildVerticalHostelCard(String image, String name, String location, double rating, int price) {
+  Widget _buildVerticalHostelCard(Hostel hostel) {
     return GestureDetector(
-      onTap: () => _navigateToHostelDetails(),
+      onTap: () => _navigateToHostelDetails(hostel),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF1D1F33),
@@ -774,13 +872,47 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-              child: Image.asset(
-                'assets/$image.jpg',
-                width: 120,
-                height: 120,
-                fit: BoxFit.cover,
-              ),
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(16)),
+              child: hostel.imageUrls.isNotEmpty
+                  ? Image.network(
+                      hostel.imageUrls[0],
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: 120,
+                          height: 120,
+                          color: Colors.grey[800],
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 120,
+                          height: 120,
+                          color: Colors.grey[800],
+                          child: const Icon(Icons.image_not_supported,
+                              color: Colors.white),
+                        );
+                      },
+                    )
+                  : Container(
+                      width: 120,
+                      height: 120,
+                      color: Colors.grey[800],
+                      child: const Icon(Icons.image_not_supported,
+                          color: Colors.white),
+                    ),
             ),
             Expanded(
               child: Padding(
@@ -793,7 +925,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       children: [
                         Expanded(
                           child: Text(
-                            name,
+                            hostel.name,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -808,7 +940,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             GestureDetector(
                               onTap: () {
                                 setState(() {
-                                  _savedStatus[image] = !_savedStatus[image]!;
+                                  _savedStatus[hostel.id] =
+                                      !_savedStatus[hostel.id]!;
                                 });
                               },
                               child: SizedBox(
@@ -817,7 +950,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 child: Lottie.asset(
                                   'assets/saved.json',
                                   controller: _saveController,
-                                  animate: _savedStatus[image]!,
+                                  animate: _savedStatus[hostel.id]!,
                                   onLoaded: (composition) {
                                     _saveController
                                       ..duration = composition.duration
@@ -831,7 +964,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             GestureDetector(
                               onTap: () {
                                 setState(() {
-                                  _likedStatus[image] = !_likedStatus[image]!;
+                                  _likedStatus[hostel.id] =
+                                      !_likedStatus[hostel.id]!;
                                 });
                               },
                               child: SizedBox(
@@ -840,7 +974,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 child: Lottie.asset(
                                   'assets/love.json',
                                   controller: _likeController,
-                                  animate: _likedStatus[image]!,
+                                  animate: _likedStatus[hostel.id]!,
                                   onLoaded: (composition) {
                                     _likeController
                                       ..duration = composition.duration
@@ -856,10 +990,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.location_on, color: Colors.blueAccent, size: 14),
+                        const Icon(Icons.location_on,
+                            color: Colors.blueAccent, size: 14),
                         const SizedBox(width: 4),
                         Text(
-                          location,
+                          hostel.location,
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
@@ -873,7 +1008,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         const Icon(Icons.star, color: Colors.amber, size: 14),
                         const SizedBox(width: 4),
                         Text(
-                          rating.toString(),
+                          hostel.rating.toString(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -882,7 +1017,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                         const Spacer(),
                         Text(
-                          '\$$price',
+                          '₦${hostel.price}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -890,7 +1025,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ),
                         ),
                         const Text(
-                          '/night',
+                          '/year',
                           style: TextStyle(
                             color: Colors.white54,
                             fontSize: 12,
@@ -932,7 +1067,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         children: [
           Row(
             children: [
-              const Icon(Icons.verified_user, color: Colors.blueAccent, size: 24),
+              const Icon(Icons.verified_user,
+                  color: Colors.blueAccent, size: 24),
               const SizedBox(width: 12),
               const Text(
                 'Verified Hostels',
@@ -1002,7 +1138,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() => _currentIndex = index);
-          // Handle navigation to different pages
           switch (index) {
             case 0:
               // Already on home page
@@ -1109,8 +1244,55 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  void _navigateToHostelDetails() {
-    // Implement navigation to hostel details
-    debugPrint('Navigating to hostel details');
+  void _navigateToHostelDetails(Hostel hostel) {
+    debugPrint('Navigating to details of ${hostel.name}');
+    // Implement navigation to hostel details page
+  }
+}
+
+class Hostel {
+  final String id;
+  final String name;
+  final String type;
+  final String location;
+  final int price;
+  final int unitsTotal;
+  final int unitsLeft;
+  final List<String> features;
+  final String description;
+  final List<String> imageUrls;
+  final double rating;
+  final bool isAvailable;
+
+  Hostel({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.location,
+    required this.price,
+    required this.unitsTotal,
+    required this.unitsLeft,
+    required this.features,
+    required this.description,
+    required this.imageUrls,
+    required this.rating,
+    required this.isAvailable,
+  });
+
+  factory Hostel.fromMap(String id, Map<String, dynamic> map) {
+    return Hostel(
+      id: id,
+      name: map['name'] ?? '',
+      type: map['type'] ?? '',
+      location: map['location'] ?? '',
+      price: map['price']?.toInt() ?? 0,
+      unitsTotal: map['unitsTotal']?.toInt() ?? 0,
+      unitsLeft: map['unitsLeft']?.toInt() ?? 0,
+      features: List<String>.from(map['features'] ?? []),
+      description: map['description'] ?? '',
+      imageUrls: List<String>.from(map['imageUrls'] ?? []),
+      rating: map['rating']?.toDouble() ?? 0.0,
+      isAvailable: map['isAvailable'] ?? false,
+    );
   }
 }
