@@ -1,14 +1,15 @@
-// ignore_for_file: dead_code, unused_import, deprecated_member_use
+// ignore_for_file: dead_code
 
+import 'package:campus_cush_consumer/hostel_detail_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:campus_cush_consumer/bookings.dart';
 import 'package:campus_cush_consumer/chat_page.dart';
 import 'package:campus_cush_consumer/profile_page.dart';
 import 'package:campus_cush_consumer/explore_page.dart';
 import 'package:campus_cush_consumer/saved.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:campus_cush_consumer/models/hostel_model.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -30,9 +31,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final Map<String, bool> _likedStatus = {};
   final Map<String, bool> _savedStatus = {};
 
-  // Firebase Database
-  final DatabaseReference _databaseRef =
-      FirebaseDatabase.instance.ref('hostels');
+  // Firestore
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<Hostel> _featuredHostels = [];
   List<Hostel> _recentHostels = [];
   bool _isLoading = true;
@@ -48,13 +48,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _loadHostels() async {
     try {
       // Get featured hostels (first 5)
-      final featuredSnapshot = await _databaseRef.limitToFirst(5).get();
-      final featuredHostels = _processSnapshot(featuredSnapshot);
+      final featuredQuery = await _firestore
+          .collection('hostels')
+          .where('isAvailable', isEqualTo: true)
+          .limit(5)
+          .get();
+      final featuredHostels =
+          featuredQuery.docs.map((doc) => Hostel.fromFirestore(doc)).toList();
 
       // Get recent hostels (last 3 by createdAt)
-      final recentSnapshot =
-          await _databaseRef.orderByChild('createdAt').limitToLast(3).get();
-      final recentHostels = _processSnapshot(recentSnapshot);
+      final recentQuery = await _firestore
+          .collection('hostels')
+          .where('isAvailable', isEqualTo: true)
+          .orderBy('createdAt', descending: true)
+          .limit(3)
+          .get();
+      final recentHostels =
+          recentQuery.docs.map((doc) => Hostel.fromFirestore(doc)).toList();
 
       setState(() {
         _featuredHostels = featuredHostels;
@@ -71,15 +81,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       debugPrint('Error loading hostels: $e');
       setState(() => _isLoading = false);
     }
-  }
-
-  List<Hostel> _processSnapshot(DataSnapshot snapshot) {
-    if (!snapshot.exists) return [];
-
-    final hostelsMap = snapshot.value as Map<dynamic, dynamic>;
-    return hostelsMap.entries.map((entry) {
-      return Hostel.fromMap(entry.key, Map<String, dynamic>.from(entry.value));
-    }).toList();
   }
 
   @override
@@ -659,7 +660,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       const Icon(Icons.star, color: Colors.amber, size: 14),
                       const SizedBox(width: 4),
                       Text(
-                        hostel.rating.toString(),
+                        hostel.rating.toStringAsFixed(1),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -1008,7 +1009,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         const Icon(Icons.star, color: Colors.amber, size: 14),
                         const SizedBox(width: 4),
                         Text(
-                          hostel.rating.toString(),
+                          hostel.rating.toStringAsFixed(1),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -1245,54 +1246,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _navigateToHostelDetails(Hostel hostel) {
-    debugPrint('Navigating to details of ${hostel.name}');
-    // Implement navigation to hostel details page
-  }
-}
-
-class Hostel {
-  final String id;
-  final String name;
-  final String type;
-  final String location;
-  final int price;
-  final int unitsTotal;
-  final int unitsLeft;
-  final List<String> features;
-  final String description;
-  final List<String> imageUrls;
-  final double rating;
-  final bool isAvailable;
-
-  Hostel({
-    required this.id,
-    required this.name,
-    required this.type,
-    required this.location,
-    required this.price,
-    required this.unitsTotal,
-    required this.unitsLeft,
-    required this.features,
-    required this.description,
-    required this.imageUrls,
-    required this.rating,
-    required this.isAvailable,
-  });
-
-  factory Hostel.fromMap(String id, Map<String, dynamic> map) {
-    return Hostel(
-      id: id,
-      name: map['name'] ?? '',
-      type: map['type'] ?? '',
-      location: map['location'] ?? '',
-      price: map['price']?.toInt() ?? 0,
-      unitsTotal: map['unitsTotal']?.toInt() ?? 0,
-      unitsLeft: map['unitsLeft']?.toInt() ?? 0,
-      features: List<String>.from(map['features'] ?? []),
-      description: map['description'] ?? '',
-      imageUrls: List<String>.from(map['imageUrls'] ?? []),
-      rating: map['rating']?.toDouble() ?? 0.0,
-      isAvailable: map['isAvailable'] ?? false,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HostelDetailPage(hostel: hostel),
+      ),
     );
   }
 }
+
+// Import the correct Hostel model
