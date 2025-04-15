@@ -1,8 +1,12 @@
+// ignore_for_file: unused_local_variable
+
+import 'package:campus_cush_consumer/payment_page.dart';
 import 'package:flutter/material.dart';
 import 'package:campus_cush_consumer/models/hostel_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class HostelDetailPage extends StatefulWidget {
   final Hostel hostel;
@@ -530,8 +534,50 @@ class _HostelDetailPageState extends State<HostelDetailPage> {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  void _shareHostel() {
-    // Implement share functionality
+  void _shareHostel() async {
+    try {
+      // Using data from the widget.hostel model
+      final hostelName = widget.hostel.name;
+      final hostelLocation = widget.hostel.location;
+      final hostelRating = widget.hostel.rating.toStringAsFixed(1);
+      final hostelPrice = '₦${widget.hostel.price.toStringAsFixed(0)}';
+
+      // Create a share message with hostel details
+      final String shareMessage =
+          'Check out this amazing hostel on Campus Cush!\n\n'
+          'Name: $hostelName\n'
+          'Location: $hostelLocation\n'
+          'Rating: $hostelRating/5 (${widget.hostel.reviewCount} reviews)\n'
+          'Price: $hostelPrice per year\n'
+          'Type: ${widget.hostel.type}\n'
+          'Units left: ${widget.hostel.unitsLeft}\n\n'
+          'Download Campus Cush app to book this hostel!';
+
+      // Optional: Create a dynamic link to this specific hostel
+      // This would require Firebase Dynamic Links setup
+      final String shareUrl =
+          'https://campuscush.com/hostel/${widget.hostel.id}';
+
+      // Share the content - you'll need to add the share_plus package to pubspec.yaml
+      await Share.share(
+        shareMessage,
+        subject: 'Check out $hostelName on Campus Cush!',
+      );
+
+      // Optional: Track this share event in analytics
+      // If you have Firebase Analytics set up:
+      // FirebaseAnalytics.instance.logShare(
+      //   contentType: 'hostel',
+      //   itemId: widget.hostel.id,
+      //   method: 'app_share'
+      // );
+    } catch (e) {
+      debugPrint('Error sharing hostel: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Could not share hostel details. Please try again.')),
+      );
+    }
   }
 
   void _toggleFavorite() {
@@ -543,6 +589,12 @@ class _HostelDetailPageState extends State<HostelDetailPage> {
   }
 
   void _bookHostel() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentPage(hostel: widget.hostel),
+      ),
+    );
     // Implement booking functionality
   }
 }

@@ -119,7 +119,7 @@ class _ExplorePageState extends State<ExplorePage>
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            systemOverlayStyle: SystemUiOverlayStyle(
+            systemOverlayStyle: const SystemUiOverlayStyle(
               statusBarColor: primaryColor,
               statusBarIconBrightness: Brightness.light,
             ),

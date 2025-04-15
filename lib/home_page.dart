@@ -41,7 +41,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late List<Hostel> _recentHostels = [];
 
 // Better to use a ValueNotifier or state management for loading state
-  ValueNotifier<bool> _isLoading = ValueNotifier(true);
+  final ValueNotifier<bool> _isLoading = ValueNotifier(true);
 
 // OR if not using ValueNotifier:
 
@@ -753,15 +753,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             child: SizedBox(
                               width: 24,
                               height: 24,
-                              child: Lottie.asset(
-                                'assets/love.json',
-                                controller: _likeController,
-                                animate: _likedStatus[hostel.id]!,
-                                onLoaded: (composition) {
-                                  _likeController
-                                    ..duration = composition.duration
-                                    ..forward(from: 0);
-                                },
+                              child: Icon(
+                                _likedStatus[hostel.id]!
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: _likedStatus[hostel.id]!
+                                    ? Colors.red
+                                    : Colors.white70,
+                                size: 24,
                               ),
                             ),
                           ),
@@ -925,7 +924,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Chip(
       label: Text(city),
       backgroundColor: Colors.transparent,
-      labelStyle: const TextStyle(color: Colors.white),
+      labelStyle: const TextStyle(color: Colors.red),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: const BorderSide(color: Colors.white24),
