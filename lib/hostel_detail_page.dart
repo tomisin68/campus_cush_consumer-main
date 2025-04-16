@@ -1,4 +1,4 @@
-// ignore_for_file: unused_local_variable
+// ignore_for_file: unused_local_variable, use_build_context_synchronously
 
 import 'package:campus_cush_consumer/payment_page.dart';
 import 'package:flutter/material.dart';
@@ -556,9 +556,9 @@ class _HostelDetailPageState extends State<HostelDetailPage> {
       // Optional: Create a dynamic link to this specific hostel
       // This would require Firebase Dynamic Links setup
       final String shareUrl =
-          'https://campuscush.com/hostel/${widget.hostel.id}';
+          "https://campus-cush.web.app/hostel/${widget.hostel.id}";
 
-      // Share the content - you'll need to add the share_plus package to pubspec.yaml
+// Share the content
       await Share.share(
         shareMessage,
         subject: 'Check out $hostelName on Campus Cush!',
