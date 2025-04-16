@@ -796,7 +796,7 @@ packages:
       sha256: dc6ecaa00a7c708e5b4d10ee7bec8c270e9276dfcab1783f57e9962d7884305f
       url: "https://pub.dev"
     source: hosted
-    version: "5.12.0"
+    version: "5.5.4"
   xdg_directories:
     dependency: transitive
     description:
@@ -814,5 +814,5 @@ packages:
     source: hosted
     version: "6.5.0"
 sdks:
-  dart: ">=3.7.0 <4.0.0"
-  flutter: ">=3.27.0"
+  dart: ">=3.4.3 <4.0.0"
+  flutter: ">=3.22.0"
