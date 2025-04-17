@@ -282,9 +282,9 @@ class _SignupPageState extends State<SignupPage> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4)),
                         side: BorderSide(color: Colors.white70),
-                        fillColor: MaterialStateProperty.resolveWith<Color>(
-                            (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.selected)) {
+                        fillColor: WidgetStateProperty.resolveWith<Color>(
+                            (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.selected)) {
                             return Colors.blueAccent;
                           }
                           return Colors.transparent;

@@ -285,9 +285,9 @@ class _PaymentPageState extends State<PaymentPage> {
         value: value,
         groupValue: _selectedPaymentMethod,
         activeColor: Colors.blueAccent,
-        fillColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
-            if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
+            if (states.contains(WidgetState.selected)) {
               return Colors.blueAccent;
             }
             return Colors.white70;

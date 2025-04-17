@@ -1,8 +1,7 @@
-// ignore_for_file: dead_code
+// ignore_for_file: dead_code, deprecated_member_use
 
 import 'package:campus_cush_consumer/hostel_detail_page.dart';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:campus_cush_consumer/bookings.dart';
 import 'package:campus_cush_consumer/chat_page.dart';
 import 'package:campus_cush_consumer/profile_page.dart';
@@ -19,44 +18,30 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   bool _searchExpanded = false;
   final TextEditingController _searchController = TextEditingController();
 
-  // Animation controllers
-  late AnimationController _likeController;
-  late AnimationController _saveController;
-
   // Track liked and saved states
   Map<String, bool> _likedStatus = {};
   Map<String, bool> _savedStatus = {};
-// Firestore instance should typically be accessed directly via FirebaseFirestore.instance
-// unless you have a specific reason to store it in a variable
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-// Initialize as empty lists and mark as late since they'll be initialized later
-  late List<Hostel> _featuredHostels =
-      []; // Note: Fix typo from "hostels" to "hostels" if needed
+  late List<Hostel> _featuredHostels = [];
   late List<Hostel> _recentHostels = [];
-
-// Better to use a ValueNotifier or state management for loading state
   final ValueNotifier<bool> _isLoading = ValueNotifier(true);
-
-// OR if not using ValueNotifier:
 
   @override
   void initState() {
     super.initState();
-    _likeController = AnimationController(vsync: this);
-    _saveController = AnimationController(vsync: this);
     _loadHostels();
   }
 
   Future<void> _loadHostels() async {
     if (!mounted) return;
 
-    _isLoading.value = true; // Since it's a ValueNotifier, update directly
+    _isLoading.value = true;
 
     try {
       debugPrint('Starting hostel data loading...');
@@ -180,7 +165,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       if (e.code == 'failed-precondition') {
         debugPrint(
             'Recent hostels query needs index. Falling back to unordered.');
-        // Fallback to query without ordering
         final fallbackQuery = _firestore
             .collection('hostels')
             .where('isAvailable', isEqualTo: true)
@@ -209,14 +193,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         .toList();
   }
 
-// Removed duplicate _getFeaturedHostels function to resolve the conflict.
-
-// Removed duplicate _getRecentHostels function to resolve the conflict.
-
   @override
   void dispose() {
-    _likeController.dispose();
-    _saveController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -478,7 +456,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       onPressed: () {
-                        // Apply filters
                         Navigator.pop(context);
                       },
                       child: const Text(
@@ -501,7 +478,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _performSearch(String query) {
     debugPrint('Searching for: $query');
-    // Implement search functionality
   }
 
   Widget _buildFilterChips() {
@@ -531,9 +507,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       backgroundColor: const Color(0xFF1D1F33),
       labelStyle: TextStyle(color: selected ? Colors.blueAccent : Colors.white),
       selected: selected,
-      onSelected: (bool value) {
-        // Implement filter functionality
-      },
+      onSelected: (bool value) {},
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: selected ? Colors.blueAccent : Colors.white12),
@@ -723,22 +697,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             onTap: () {
                               setState(() {
                                 _savedStatus[hostel.id] =
-                                    !_savedStatus[hostel.id]!;
+                                    !(_savedStatus[hostel.id] ?? false);
+                                if (_savedStatus[hostel.id]!) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content:
+                                          const Text('Hostel has been saved'),
+                                      backgroundColor: Colors.green,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
                               });
                             },
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: Lottie.asset(
-                                'assets/saved.json',
-                                controller: _saveController,
-                                animate: _savedStatus[hostel.id]!,
-                                onLoaded: (composition) {
-                                  _saveController
-                                    ..duration = composition.duration
-                                    ..forward(from: 0);
-                                },
-                              ),
+                            child: Icon(
+                              _savedStatus[hostel.id] ?? false
+                                  ? Icons.bookmark
+                                  : Icons.bookmark_border,
+                              color: _savedStatus[hostel.id] ?? false
+                                  ? Colors.yellow
+                                  : Colors.white70,
+                              size: 24,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -747,21 +726,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             onTap: () {
                               setState(() {
                                 _likedStatus[hostel.id] =
-                                    !_likedStatus[hostel.id]!;
+                                    !(_likedStatus[hostel.id] ?? false);
                               });
                             },
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: Icon(
-                                _likedStatus[hostel.id]!
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: _likedStatus[hostel.id]!
-                                    ? Colors.red
-                                    : Colors.white70,
-                                size: 24,
-                              ),
+                            child: Icon(
+                              _likedStatus[hostel.id] ?? false
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: _likedStatus[hostel.id] ?? false
+                                  ? Colors.red
+                                  : Colors.white70,
+                              size: 24,
                             ),
                           ),
                         ],
@@ -1071,22 +1046,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               onTap: () {
                                 setState(() {
                                   _savedStatus[hostel.id] =
-                                      !_savedStatus[hostel.id]!;
+                                      !(_savedStatus[hostel.id] ?? false);
+                                  if (_savedStatus[hostel.id]!) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content:
+                                            const Text('Hostel has been saved'),
+                                        backgroundColor: Colors.green,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
                                 });
                               },
-                              child: SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: Lottie.asset(
-                                  'assets/saved.json',
-                                  controller: _saveController,
-                                  animate: _savedStatus[hostel.id]!,
-                                  onLoaded: (composition) {
-                                    _saveController
-                                      ..duration = composition.duration
-                                      ..forward(from: 0);
-                                  },
-                                ),
+                              child: Icon(
+                                _savedStatus[hostel.id] ?? false
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_border,
+                                color: _savedStatus[hostel.id] ?? false
+                                    ? Colors.yellow
+                                    : Colors.white70,
+                                size: 24,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -1095,22 +1075,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               onTap: () {
                                 setState(() {
                                   _likedStatus[hostel.id] =
-                                      !_likedStatus[hostel.id]!;
+                                      !(_likedStatus[hostel.id] ?? false);
                                 });
                               },
-                              child: SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: Lottie.asset(
-                                  'assets/love.json',
-                                  controller: _likeController,
-                                  animate: _likedStatus[hostel.id]!,
-                                  onLoaded: (composition) {
-                                    _likeController
-                                      ..duration = composition.duration
-                                      ..forward(from: 0);
-                                  },
-                                ),
+                              child: Icon(
+                                _likedStatus[hostel.id] ?? false
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: _likedStatus[hostel.id] ?? false
+                                    ? Colors.red
+                                    : Colors.white70,
+                                size: 24,
                               ),
                             ),
                           ],
@@ -1270,7 +1245,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           setState(() => _currentIndex = index);
           switch (index) {
             case 0:
-              // Already on home page
               break;
             case 1:
               Navigator.push(
@@ -1383,5 +1357,3 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 }
-
-// Import the correct Hostel model
