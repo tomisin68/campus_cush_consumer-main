@@ -34,16 +34,34 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
       } on FirebaseAuthException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'Login failed'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showToast(context, e.message ?? 'Login failed', Icons.error,
+            Colors.redAccent);
       } finally {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _showToast(
+      BuildContext context, String message, IconData icon, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+        backgroundColor: color,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   void _forgotPassword() {
@@ -54,9 +72,9 @@ class _LoginPageState extends State<LoginPage> {
       builder: (context) {
         final resetController = TextEditingController();
         return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1D1F33),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -66,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).dividerColor,
+                  color: Colors.white24,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -76,22 +94,33 @@ class _LoginPageState extends State<LoginPage> {
                 style: GoogleFonts.roboto(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: resetController,
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'Email address',
-                  prefixIcon:
-                      const Icon(Icons.email_outlined, color: Colors.blue),
+                  labelStyle: const TextStyle(color: Colors.white54),
+                  prefixIcon: const Icon(Icons.email_outlined,
+                      color: Colors.blueAccent),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Colors.blueAccent, width: 1.5),
                   ),
                   filled: true,
-                  fillColor:
-                      Theme.of(context).colorScheme.surfaceContainerLowest,
+                  fillColor: const Color(0xFF1D1F33),
                 ),
               ),
               const SizedBox(height: 24),
@@ -105,26 +134,22 @@ class _LoginPageState extends State<LoginPage> {
                         await FirebaseAuth.instance
                             .sendPasswordResetEmail(email: email);
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content:
-                                Text('Password reset link sent to your email'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
+                        _showToast(
+                            context,
+                            'Password reset link sent to your email',
+                            Icons.check_circle,
+                            Colors.green);
                       } on FirebaseAuthException catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content:
-                                Text(e.message ?? 'Error sending reset link'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                        _showToast(
+                            context,
+                            e.message ?? 'Error sending reset link',
+                            Icons.error,
+                            Colors.redAccent);
                       }
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Colors.blueAccent,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -148,16 +173,12 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: colorScheme.surface,
       ),
       child: Scaffold(
-        backgroundColor: colorScheme.surface,
+        backgroundColor: const Color(0xFF0A0E21),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -173,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                       style: GoogleFonts.roboto(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -183,22 +204,34 @@ class _LoginPageState extends State<LoginPage> {
                       'Sign in to find your perfect hostel',
                       style: GoogleFonts.roboto(
                         fontSize: 14,
-                        color: colorScheme.onSurface.withOpacity(0.6),
+                        color: Colors.white70,
                       ),
                     ),
                   ),
                   const SizedBox(height: 32),
                   TextFormField(
                     controller: _emailController,
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       hintText: 'Email address',
-                      prefixIcon:
-                          const Icon(Icons.email_outlined, color: Colors.blue),
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      prefixIcon: const Icon(Icons.email_outlined,
+                          color: Colors.blueAccent),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: Colors.blueAccent, width: 1.5),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceContainerLowest,
+                      fillColor: const Color(0xFF1D1F33),
                     ),
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
@@ -215,25 +248,37 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _passwordController,
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       hintText: 'Password',
-                      prefixIcon:
-                          const Icon(Icons.lock_outline, color: Colors.blue),
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      prefixIcon: const Icon(Icons.lock_outline,
+                          color: Colors.blueAccent),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _showPassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Colors.blue,
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: Colors.blueAccent,
                         ),
                         onPressed: () =>
                             setState(() => _showPassword = !_showPassword),
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: Colors.blueAccent, width: 1.5),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceContainerLowest,
+                      fillColor: const Color(0xFF1D1F33),
                     ),
                     obscureText: !_showPassword,
                     validator: (value) {
@@ -252,7 +297,7 @@ class _LoginPageState extends State<LoginPage> {
                         'Forgot password?',
                         style: GoogleFonts.roboto(
                           fontSize: 14,
-                          color: Colors.blue,
+                          color: Colors.blueAccent,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -262,20 +307,86 @@ class _LoginPageState extends State<LoginPage> {
                   ElevatedButton(
                     onPressed: _isLoading ? null : _submitForm,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Colors.blueAccent,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 2,
                     ),
                     child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : Text(
                             'Sign In',
                             style: GoogleFonts.roboto(
                                 fontSize: 16, fontWeight: FontWeight.w500),
                           ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: Colors.white.withOpacity(0.2),
+                          thickness: 1,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text(
+                          'OR',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: Colors.white.withOpacity(0.2),
+                          thickness: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton(
+                    onPressed: () {
+                      // Implement Google sign in
+                    },
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1D1F33),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/google.png',
+                          width: 24,
+                          height: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Sign in with Google',
+                          style: GoogleFonts.roboto(
+                              fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -285,7 +396,7 @@ class _LoginPageState extends State<LoginPage> {
                         'Don\'t have an account? ',
                         style: GoogleFonts.roboto(
                           fontSize: 14,
-                          color: colorScheme.onSurface.withOpacity(0.6),
+                          color: Colors.white70,
                         ),
                       ),
                       TextButton(
@@ -296,11 +407,16 @@ class _LoginPageState extends State<LoginPage> {
                                 builder: (context) => const SignupPage()),
                           );
                         },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                         child: Text(
                           'Sign up',
                           style: GoogleFonts.roboto(
                             fontSize: 14,
-                            color: Colors.blue,
+                            color: Colors.blueAccent,
                             fontWeight: FontWeight.w500,
                           ),
                         ),

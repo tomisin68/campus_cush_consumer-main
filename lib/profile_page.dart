@@ -29,18 +29,105 @@ class _ProfilePageState extends State<ProfilePage> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            systemOverlayStyle: const SystemUiOverlayStyle(
-              statusBarColor: primaryColor,
+            systemOverlayStyle: SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
               statusBarIconBrightness: Brightness.light,
+              systemNavigationBarColor: const Color(0xFF0A0E21),
             ),
-            expandedHeight: 200.0,
+            expandedHeight: 220.0,
             floating: false,
             pinned: true,
+            snap: false,
+            stretch: true,
+            backgroundColor: const Color(0xFF0A0E21),
+            elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
+              stretchModes: const [
+                StretchMode.zoomBackground,
+                StretchMode.blurBackground,
+              ],
+              centerTitle: true,
+              title: AnimatedOpacity(
+                opacity: 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: Text(
+                  'Profile',
+                  style: GoogleFonts.roboto(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
               background: Container(
-                color: primaryColor,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xFF0A0E21).withOpacity(0.9),
+                      const Color(0xFF1D1F33).withOpacity(0.7),
+                    ],
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: 20,
+                      top: 70,
+                      child: Opacity(
+                        opacity: 0.2,
+                        child: Icon(
+                          Icons.person,
+                          size: 120,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.verified,
+                                color: Colors.blueAccent, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Premium Member',
+                              style: GoogleFonts.roboto(
+                                color: Colors.blueAccent,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+            actions: [
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF1D1F33).withOpacity(0.5),
+                  ),
+                  child:
+                      const Icon(Icons.settings, color: Colors.white, size: 20),
+                ),
+                onPressed: () {
+                  // Settings action
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
           SliverToBoxAdapter(
             child: Padding(

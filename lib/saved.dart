@@ -1,7 +1,10 @@
+// ignore_for_file: unused_field
+
 import 'package:flutter/material.dart';
 import 'package:campus_cush_consumer/models/hostel_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:campus_cush_consumer/hostel_detail_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SavedPage extends StatefulWidget {
   const SavedPage({super.key});
@@ -12,9 +15,10 @@ class SavedPage extends StatefulWidget {
 
 class _SavedPageState extends State<SavedPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   List<Hostel> _savedHostels = [];
+  List<Hostel> _filteredHostels = [];
   bool _isLoading = true;
-  String _currentFilter = 'All';
 
   @override
   void initState() {
@@ -24,12 +28,32 @@ class _SavedPageState extends State<SavedPage> {
 
   Future<void> _loadSavedHostels() async {
     try {
-      // In a real app, you would query hostels that the user has saved
-      // For now, we'll use a dummy query - replace with your actual saved hostels logic
+      final user = _auth.currentUser;
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Get the user's saved hostel IDs
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final savedHostelIds =
+          List<String>.from(userDoc.data()?['savedHostels'] ?? []);
+
+      if (savedHostelIds.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _savedHostels = [];
+          _filteredHostels = [];
+        });
+        return;
+      }
+
+      // Get the hostel documents for the saved IDs
       final query = _firestore
           .collection('hostels')
-          .where('isAvailable', isEqualTo: true)
-          .limit(5);
+          .where(FieldPath.documentId, whereIn: savedHostelIds);
 
       final snapshot = await query.get();
       final hostels = _parseHostelDocuments(snapshot.docs);
@@ -61,34 +85,56 @@ class _SavedPageState extends State<SavedPage> {
         .toList();
   }
 
+  Future<void> _toggleSaveHostel(String hostelId, bool isCurrentlySaved) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      final userRef = _firestore.collection('users').doc(user.uid);
+
+      if (isCurrentlySaved) {
+        // Remove from saved
+        await userRef.update({
+          'savedHostels': FieldValue.arrayRemove([hostelId])
+        });
+      } else {
+        // Add to saved
+        await userRef.update({
+          'savedHostels': FieldValue.arrayUnion([hostelId])
+        });
+      }
+
+      // Reload the saved hostels
+      await _loadSavedHostels();
+    } catch (e) {
+      debugPrint('Error toggling save: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to update saved hostels'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E21),
       appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          // Filter Chips
-          _buildFilterChips(),
-
-          // Saved Items List
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _savedHostels.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        itemCount: _savedHostels.length,
-                        itemBuilder: (context, index) {
-                          final hostel = _savedHostels[index];
-                          return _buildSavedHostelCard(hostel);
-                        },
-                      ),
-          ),
-        ],
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _savedHostels.isEmpty
+              ? _buildEmptyState()
+              : ListView.builder(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: _savedHostels.length,
+                  itemBuilder: (context, index) {
+                    final hostel = _savedHostels[index];
+                    return _buildSavedHostelCard(hostel);
+                  },
+                ),
     );
   }
 
@@ -113,50 +159,6 @@ class _SavedPageState extends State<SavedPage> {
           },
         ),
       ],
-    );
-  }
-
-  Widget _buildFilterChips() {
-    final filters = ['All', 'Private', 'Shared', 'Studio', 'Near Campus'];
-
-    return SizedBox(
-      height: 50,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: filters.length,
-        itemBuilder: (context, index) {
-          final filter = filters[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(
-                filter,
-                style: TextStyle(
-                  color: _currentFilter == filter
-                      ? Colors.white
-                      : Colors.white.withOpacity(0.7),
-                ),
-              ),
-              selected: _currentFilter == filter,
-              onSelected: (selected) {
-                setState(() {
-                  _currentFilter = selected ? filter : 'All';
-                  // Apply filter logic here
-                });
-              },
-              selectedColor: Colors.blueAccent,
-              backgroundColor: const Color(0xFF1D1F33),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: Colors.white.withOpacity(0.1),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
     );
   }
 
@@ -242,6 +244,22 @@ class _SavedPageState extends State<SavedPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                  ),
+                ),
+
+                // Save Button
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.bookmark,
+                      color: Colors.blueAccent,
+                      size: 30,
+                    ),
+                    onPressed: () async {
+                      await _toggleSaveHostel(hostel.id, true);
+                    },
                   ),
                 ),
               ],
@@ -448,6 +466,7 @@ class _SavedPageState extends State<SavedPage> {
             ),
             onPressed: () {
               // Navigate to explore page
+              Navigator.pop(context); // Go back to home page
             },
             child: const Text(
               'Explore Hostels',

@@ -1,15 +1,17 @@
-// ignore_for_file: dead_code, deprecated_member_use
+// ignore_for_file: dead_code
 
-import 'package:campus_cush_consumer/hostel_detail_page.dart';
-import 'package:flutter/material.dart';
+import 'dart:math';
+
 import 'package:campus_cush_consumer/bookings.dart';
 import 'package:campus_cush_consumer/chat_page.dart';
-import 'package:campus_cush_consumer/profile_page.dart';
 import 'package:campus_cush_consumer/explore_page.dart';
+import 'package:campus_cush_consumer/hostel_detail_page.dart';
+import 'package:campus_cush_consumer/profile_page.dart';
 import 'package:campus_cush_consumer/saved.dart';
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:campus_cush_consumer/models/hostel_model.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,157 +24,137 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   bool _searchExpanded = false;
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   // Track liked and saved states
-  Map<String, bool> _likedStatus = {};
-  Map<String, bool> _savedStatus = {};
+  final Map<String, bool> _likedStatus = {};
+  final Map<String, bool> _savedStatus = {};
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  late List<Hostel> _featuredHostels = [];
-  late List<Hostel> _recentHostels = [];
+  List<Hostel> _featuredHostels = [];
+  List<Hostel> _recentHostels = [];
   final ValueNotifier<bool> _isLoading = ValueNotifier(true);
+
+  // Filter states
+  double _priceRange = 100;
+  bool _wifi = false;
+  bool _breakfast = false;
+  bool _privateBathroom = false;
+  String? _selectedLocation;
+  String? _selectedCategory;
 
   @override
   void initState() {
     super.initState();
     _loadHostels();
+    _searchFocusNode.addListener(_handleSearchFocusChange);
+  }
+
+  void _handleSearchFocusChange() {
+    if (_searchFocusNode.hasFocus) {
+      setState(() => _searchExpanded = true);
+    }
   }
 
   Future<void> _loadHostels() async {
     if (!mounted) return;
-
     _isLoading.value = true;
 
     try {
-      debugPrint('Starting hostel data loading...');
-      final stopwatch = Stopwatch()..start();
-
       final results = await Future.wait([
         _getFeaturedHostels(),
         _getRecentHostels(),
-      ], eagerError: true);
+      ]);
 
       final featuredHostels = results[0];
       final recentHostels = results[1];
 
-      debugPrint('''Data loaded in ${stopwatch.elapsedMilliseconds}ms:
-      Featured: ${featuredHostels.length}, 
-      Recent: ${recentHostels.length}''');
-
       if (!mounted) return;
 
-      final allHostels = [...featuredHostels, ...recentHostels];
-      final newLikedStatus = <String, bool>{};
-      final newSavedStatus = <String, bool>{};
+      // Smart random loading algorithm
+      final allHostels = [...featuredHostels, ...recentHostels]..shuffle();
 
-      for (final hostel in allHostels) {
-        newLikedStatus[hostel.id] = _likedStatus[hostel.id] ?? false;
-        newSavedStatus[hostel.id] = _savedStatus[hostel.id] ?? false;
-      }
+      // Apply weighted randomness (featured hostels have higher chance)
+      final randomHostels =
+          _getWeightedRandomHostels(allHostels, featuredHostels);
 
       setState(() {
-        _featuredHostels = featuredHostels;
-        _recentHostels = recentHostels;
-        _likedStatus = newLikedStatus;
-        _savedStatus = newSavedStatus;
+        _featuredHostels = randomHostels.sublist(0, 5);
+        _recentHostels = randomHostels.sublist(5);
       });
-    } on FirebaseException catch (e) {
-      debugPrint('Firestore error: ${e.code} - ${e.message}');
-      if (e.code == 'failed-precondition') {
-        _showIndexErrorNotification();
+    } catch (e) {
+      debugPrint('Error loading hostels: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to load hostels'),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _loadHostels,
+            ),
+          ),
+        );
       }
-      _handleError(e);
-    } on TypeError catch (e) {
-      debugPrint('Type conversion error: $e');
-      _handleError(
-          Exception('Data format error. Please check hostel documents.'));
-    } catch (e, stackTrace) {
-      debugPrint('Unexpected error: $e\n$stackTrace');
-      _handleError(e is Exception ? e : Exception('Unknown error occurred'));
     } finally {
       if (mounted) _isLoading.value = false;
     }
   }
 
-  void _handleError(Exception error) {
-    if (!mounted) return;
+  // Weighted random algorithm for hostel loading
+  List<Hostel> _getWeightedRandomHostels(
+      List<Hostel> allHostels, List<Hostel> featured) {
+    final random = Random();
+    final weightedList = <Hostel>[];
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Failed to load hostels'),
-        action: SnackBarAction(
-          label: 'Retry',
-          onPressed: _loadHostels,
-        ),
-      ),
-    );
-  }
+    // Add featured hostels twice to increase their chance
+    weightedList.addAll(allHostels);
+    weightedList.addAll(featured);
 
-  void _showIndexErrorNotification() {
-    if (!mounted) return;
+    // Shuffle with timestamp-based seed for better randomness
+    weightedList.shuffle(random);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Database needs configuration'),
-        action: SnackBarAction(
-          label: 'Fix Now',
-          onPressed: _openIndexCreationUrl,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openIndexCreationUrl() async {
-    const url =
-        'https://console.firebase.google.com/project/_/firestore/indexes';
-    try {
-      if (await canLaunch(url)) {
-        await launch(url);
-      } else {
-        debugPrint('Could not launch URL: $url');
-      }
-    } catch (e) {
-      debugPrint('Error launching URL: $e');
-    }
+    // Remove duplicates while preserving order
+    return weightedList.toSet().toList();
   }
 
   Future<List<Hostel>> _getFeaturedHostels() async {
     try {
-      final query = _firestore
+      final snapshot = await _firestore
           .collection('hostels')
           .where('isAvailable', isEqualTo: true)
-          .limit(5);
-
-      final snapshot = await query.get();
+          .limit(8)
+          .get();
       return _parseHostelDocuments(snapshot.docs);
-    } on FirebaseException catch (e) {
-      debugPrint('Featured hostels query error: ${e.code}');
+    } catch (e) {
+      debugPrint('Error getting featured hostels: $e');
       return [];
     }
   }
 
   Future<List<Hostel>> _getRecentHostels() async {
     try {
-      final query = _firestore
-          .collection('hostels')
-          .where('isAvailable', isEqualTo: true)
-          .orderBy('createdAt', descending: true)
-          .limit(3);
-
-      final snapshot = await query.get();
-      return _parseHostelDocuments(snapshot.docs);
-    } on FirebaseException catch (e) {
-      if (e.code == 'failed-precondition') {
-        debugPrint(
-            'Recent hostels query needs index. Falling back to unordered.');
-        final fallbackQuery = _firestore
+      QuerySnapshot snapshot;
+      try {
+        snapshot = await _firestore
             .collection('hostels')
             .where('isAvailable', isEqualTo: true)
-            .limit(3);
-        final snapshot = await fallbackQuery.get();
-        return _parseHostelDocuments(snapshot.docs);
+            .orderBy('createdAt', descending: true)
+            .limit(5)
+            .get();
+      } on FirebaseException catch (e) {
+        if (e.code == 'failed-precondition') {
+          snapshot = await _firestore
+              .collection('hostels')
+              .where('isAvailable', isEqualTo: true)
+              .limit(5)
+              .get();
+        } else {
+          rethrow;
+        }
       }
-      debugPrint('Recent hostels query error: ${e.code}');
+      return _parseHostelDocuments(snapshot.docs);
+    } catch (e) {
+      debugPrint('Error getting recent hostels: $e');
       return [];
     }
   }
@@ -185,7 +167,6 @@ class _HomePageState extends State<HomePage> {
                 doc as DocumentSnapshot<Map<String, dynamic>>);
           } catch (e) {
             debugPrint('Error parsing hostel ${doc.id}: $e');
-            debugPrint('Document data: ${doc.data()}');
             return null;
           }
         })
@@ -193,9 +174,102 @@ class _HomePageState extends State<HomePage> {
         .toList();
   }
 
+  void _applyFilters() {
+    List<Hostel> filteredFeatured = _featuredHostels;
+    List<Hostel> filteredRecent = _recentHostels;
+
+    if (_wifi) {
+      filteredFeatured = filteredFeatured
+          .where((hostel) => hostel.features.contains('WiFi'))
+          .toList();
+      filteredRecent = filteredRecent
+          .where((hostel) => hostel.features.contains('WiFi'))
+          .toList();
+    }
+
+    if (_breakfast) {
+      filteredFeatured = filteredFeatured
+          .where((hostel) => hostel.features.contains('Breakfast Included'))
+          .toList();
+      filteredRecent = filteredRecent
+          .where((hostel) => hostel.features.contains('Breakfast Included'))
+          .toList();
+    }
+
+    if (_privateBathroom) {
+      filteredFeatured = filteredFeatured
+          .where((hostel) => hostel.features.contains('Private Bathroom'))
+          .toList();
+      filteredRecent = filteredRecent
+          .where((hostel) => hostel.features.contains('Private Bathroom'))
+          .toList();
+    }
+
+    if (_priceRange < 500) {
+      filteredFeatured = filteredFeatured
+          .where((hostel) => hostel.price <= _priceRange)
+          .toList();
+      filteredRecent = filteredRecent
+          .where((hostel) => hostel.price <= _priceRange)
+          .toList();
+    }
+
+    if (_selectedLocation != null) {
+      filteredFeatured = filteredFeatured
+          .where((hostel) => hostel.location.contains(_selectedLocation!))
+          .toList();
+      filteredRecent = filteredRecent
+          .where((hostel) => hostel.location.contains(_selectedLocation!))
+          .toList();
+    }
+
+    setState(() {
+      _featuredHostels = filteredFeatured;
+      _recentHostels = filteredRecent;
+    });
+  }
+
+  void _performSearch(String query) {
+    if (query.isEmpty) {
+      _loadHostels();
+      return;
+    }
+
+    final featuredResults = _featuredHostels
+        .where((hostel) =>
+            hostel.name.toLowerCase().contains(query.toLowerCase()) ||
+            hostel.location.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
+    final recentResults = _recentHostels
+        .where((hostel) =>
+            hostel.name.toLowerCase().contains(query.toLowerCase()) ||
+            hostel.location.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
+    setState(() {
+      _featuredHostels = featuredResults;
+      _recentHostels = recentResults;
+    });
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _priceRange = 100;
+      _wifi = false;
+      _breakfast = false;
+      _privateBathroom = false;
+      _selectedLocation = null;
+      _selectedCategory = null;
+    });
+    _loadHostels();
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
+    _isLoading.dispose();
     super.dispose();
   }
 
@@ -204,29 +278,147 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E21),
       appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSearchSection(),
-            const SizedBox(height: 24),
-            _buildFeaturedListings(),
-            const SizedBox(height: 24),
-            _buildCategoryNavigation(),
-            const SizedBox(height: 24),
-            _buildRecentListings(),
-            const SizedBox(height: 24),
-            _buildTrustIndicators(),
-            const SizedBox(height: 32),
-          ],
-        ),
+      body: ValueListenableBuilder<bool>(
+        valueListenable: _isLoading,
+        builder: (context, isLoading, _) {
+          return isLoading
+              ? _buildShimmerEffect()
+              : SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSearchSection(),
+                      const SizedBox(height: 24),
+                      _buildFeaturedListings(),
+                      const SizedBox(height: 24),
+                      _buildCategoryNavigation(),
+                      const SizedBox(height: 24),
+                      _buildRecentListings(),
+                      const SizedBox(height: 24),
+                      _buildTrustIndicators(),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                );
+        },
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
+  Widget _buildShimmerEffect() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey[800]!,
+              highlightColor: Colors.grey[700]!,
+              child: Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey[800]!,
+              highlightColor: Colors.grey[700]!,
+              child: Container(
+                height: 24,
+                width: 200,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 280,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: 3,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Shimmer.fromColors(
+                    baseColor: Colors.grey[800]!,
+                    highlightColor: Colors.grey[700]!,
+                    child: Container(
+                      width: 220,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey[800]!,
+              highlightColor: Colors.grey[700]!,
+              child: Container(
+                height: 24,
+                width: 200,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: 5,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: Shimmer.fromColors(
+                    baseColor: Colors.grey[800]!,
+                    highlightColor: Colors.grey[700]!,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 12,
+                          width: 60,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      automaticallyImplyLeading: false, // Remove back button
       backgroundColor: Colors.transparent,
       elevation: 0,
       title: const Text(
@@ -240,11 +432,9 @@ class _HomePageState extends State<HomePage> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.search, color: Colors.white),
+          icon: const Icon(Icons.notifications_none, color: Colors.white),
           onPressed: () {
-            setState(() {
-              _searchExpanded = !_searchExpanded;
-            });
+            // Handle notification tap
           },
         ),
         IconButton(
@@ -303,6 +493,7 @@ class _HomePageState extends State<HomePage> {
   Widget _collapsedSearch() {
     return TextField(
       controller: _searchController,
+      focusNode: _searchFocusNode,
       decoration: InputDecoration(
         hintText: 'Search hostels...',
         hintStyle: const TextStyle(color: Colors.white54),
@@ -315,8 +506,7 @@ class _HomePageState extends State<HomePage> {
         contentPadding: const EdgeInsets.symmetric(vertical: 16),
       ),
       style: const TextStyle(color: Colors.white),
-      onTap: () => setState(() => _searchExpanded = true),
-      onSubmitted: (value) => _performSearch(value),
+      onSubmitted: _performSearch,
     );
   }
 
@@ -368,24 +558,31 @@ class _HomePageState extends State<HomePage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            double priceRange = 100;
-            bool wifi = false;
-            bool breakfast = false;
-            bool privateBathroom = false;
-
             return Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Filters',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Filters',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _resetFilters,
+                        child: const Text(
+                          'Reset',
+                          style: TextStyle(color: Colors.blueAccent),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -396,15 +593,15 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   Slider(
-                    value: priceRange,
+                    value: _priceRange,
                     min: 0,
                     max: 500,
                     divisions: 10,
-                    label: '\$${priceRange.round()}',
+                    label: '₦${_priceRange.round()}k',
                     activeColor: Colors.blueAccent,
                     inactiveColor: Colors.white24,
                     onChanged: (value) {
-                      setModalState(() => priceRange = value);
+                      setModalState(() => _priceRange = value);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -420,29 +617,57 @@ class _HomePageState extends State<HomePage> {
                       'Free WiFi',
                       style: TextStyle(color: Colors.white70),
                     ),
-                    value: wifi,
+                    value: _wifi,
                     activeColor: Colors.blueAccent,
-                    onChanged: (value) => setModalState(() => wifi = value!),
+                    onChanged: (value) {
+                      setModalState(() => _wifi = value!);
+                    },
                   ),
                   CheckboxListTile(
                     title: const Text(
                       'Breakfast Included',
                       style: TextStyle(color: Colors.white70),
                     ),
-                    value: breakfast,
+                    value: _breakfast,
                     activeColor: Colors.blueAccent,
-                    onChanged: (value) =>
-                        setModalState(() => breakfast = value!),
+                    onChanged: (value) {
+                      setModalState(() => _breakfast = value!);
+                    },
                   ),
                   CheckboxListTile(
                     title: const Text(
                       'Private Bathroom',
                       style: TextStyle(color: Colors.white70),
                     ),
-                    value: privateBathroom,
+                    value: _privateBathroom,
                     activeColor: Colors.blueAccent,
-                    onChanged: (value) =>
-                        setModalState(() => privateBathroom = value!),
+                    onChanged: (value) {
+                      setModalState(() => _privateBathroom = value!);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Location',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 50,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _buildLocationFilterChip('Main Campus', setModalState),
+                        const SizedBox(width: 8),
+                        _buildLocationFilterChip('Oke-Baale', setModalState),
+                        const SizedBox(width: 8),
+                        _buildLocationFilterChip('Oke-Fia', setModalState),
+                        const SizedBox(width: 8),
+                        _buildLocationFilterChip('Oja-Oba', setModalState),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -457,6 +682,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       onPressed: () {
                         Navigator.pop(context);
+                        _applyFilters();
                       },
                       child: const Text(
                         'Apply Filters',
@@ -476,8 +702,28 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _performSearch(String query) {
-    debugPrint('Searching for: $query');
+  Widget _buildLocationFilterChip(String location, StateSetter setModalState) {
+    return ChoiceChip(
+      label: Text(location),
+      selected: _selectedLocation == location,
+      onSelected: (selected) {
+        setModalState(() {
+          _selectedLocation = selected ? location : null;
+        });
+      },
+      selectedColor: Colors.blueAccent.withOpacity(0.2),
+      labelStyle: TextStyle(
+        color: _selectedLocation == location ? Colors.blueAccent : Colors.white,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: _selectedLocation == location
+              ? Colors.blueAccent
+              : Colors.white24,
+        ),
+      ),
+    );
   }
 
   Widget _buildFilterChips() {
@@ -507,7 +753,9 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: const Color(0xFF1D1F33),
       labelStyle: TextStyle(color: selected ? Colors.blueAccent : Colors.white),
       selected: selected,
-      onSelected: (bool value) {},
+      onSelected: (bool value) {
+        // Implement filter functionality
+      },
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: selected ? Colors.blueAccent : Colors.white12),
@@ -518,13 +766,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFeaturedListings() {
-    if (_isLoading.value) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 32),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     if (_featuredHostels.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
@@ -661,7 +902,7 @@ class _HomePageState extends State<HomePage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '₦${hostel.price}/year',
+                      '₦${hostel.price}k/year',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -700,9 +941,8 @@ class _HomePageState extends State<HomePage> {
                                     !(_savedStatus[hostel.id] ?? false);
                                 if (_savedStatus[hostel.id]!) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content:
-                                          const Text('Hostel has been saved'),
+                                    const SnackBar(
+                                      content: Text('Hostel has been saved'),
                                       backgroundColor: Colors.green,
                                       behavior: SnackBarBehavior.floating,
                                     ),
@@ -860,61 +1100,84 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCategoryItem(IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1D1F33),
-            borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF2A2D40), Color(0xFF1D1F33)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = label;
+          _applyFilters();
+        });
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: _selectedCategory == label
+                  ? Colors.blueAccent.withOpacity(0.2)
+                  : const Color(0xFF1D1F33),
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2A2D40), Color(0xFF1D1F33)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(icon,
+                color: _selectedCategory == label
+                    ? Colors.blueAccent
+                    : Colors.blueAccent),
           ),
-          child: Icon(icon, color: Colors.blueAccent),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12,
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: _selectedCategory == label
+                  ? Colors.blueAccent
+                  : Colors.white70,
+              fontSize: 12,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildLocationChip(String city) {
-    return Chip(
-      label: Text(city),
-      backgroundColor: Colors.transparent,
-      labelStyle: const TextStyle(color: Colors.red),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Colors.white24),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedLocation = city;
+          _applyFilters();
+        });
+      },
+      child: Chip(
+        label: Text(city),
+        backgroundColor: _selectedLocation == city
+            ? Colors.blueAccent.withOpacity(0.2)
+            : Colors.transparent,
+        labelStyle: TextStyle(
+          color: _selectedLocation == city ? Colors.blueAccent : Colors.white,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color:
+                _selectedLocation == city ? Colors.blueAccent : Colors.white24,
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildRecentListings() {
-    if (_isLoading.value) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 32),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     if (_recentHostels.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
@@ -1049,9 +1312,8 @@ class _HomePageState extends State<HomePage> {
                                       !(_savedStatus[hostel.id] ?? false);
                                   if (_savedStatus[hostel.id]!) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content:
-                                            const Text('Hostel has been saved'),
+                                      const SnackBar(
+                                        content: Text('Hostel has been saved'),
                                         backgroundColor: Colors.green,
                                         behavior: SnackBarBehavior.floating,
                                       ),
@@ -1122,7 +1384,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const Spacer(),
                         Text(
-                          '₦${hostel.price}',
+                          '₦${hostel.price}k',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -1242,33 +1504,37 @@ class _HomePageState extends State<HomePage> {
       child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          setState(() => _currentIndex = index);
+          // Reset current index when returning to home
+          if (index == 0) {
+            setState(() => _currentIndex = 0);
+            return;
+          }
+
+          // Navigate to other pages
           switch (index) {
-            case 0:
-              break;
             case 1:
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ExplorePage()),
-              );
+              ).then((_) => setState(() => _currentIndex = 0));
               break;
             case 2:
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const SavedPage()),
-              );
+              ).then((_) => setState(() => _currentIndex = 0));
               break;
             case 3:
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const BookingsPage()),
-              );
+              ).then((_) => setState(() => _currentIndex = 0));
               break;
             case 4:
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ProfilePage()),
-              );
+              ).then((_) => setState(() => _currentIndex = 0));
               break;
           }
         },
@@ -1354,6 +1620,9 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(
         builder: (context) => HostelDetailPage(hostel: hostel),
       ),
-    );
+    ).then((_) {
+      // Reset the current index when returning from details page
+      setState(() => _currentIndex = 0);
+    });
   }
 }
